@@ -1,0 +1,10 @@
+.*
+!/.gitignore
+**/__pycache__/
+checkpoints/
+datasets/
+models/flownet2_pytorch/*.tar
+results/
+videos/
+preprocessing/models/
+preprocessing/files/

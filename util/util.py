@@ -1,0 +1,184 @@
+from __future__ import print_function
+import torch
+import numpy as np
+from PIL import Image
+import inspect, re
+import numpy as np
+import os
+import collections
+from PIL import Image
+import cv2
+from scipy.spatial import distance
+
+def reshape(tensors):
+    if isinstance(tensors, list):
+        return [reshape(tensor) for tensor in tensors]
+    if tensors is None:
+        return None
+    _, _, ch, h, w = tensors.size()
+    return tensors.contiguous().view(-1, ch, h, w)
+
+# get temporally subsampled frames for real/fake sequences
+def get_skipped_frames(B_all, B, t_scales, n_frames_D):
+    B_all = torch.cat([B_all.detach(), B], dim=1) if B_all is not None else B
+    B_skipped = [None] * t_scales
+    for s in range(t_scales):
+        n_frames_Ds = n_frames_D ** s
+        span = n_frames_Ds * (n_frames_D-1)
+        n_groups = min(B_all.size()[1] - span, B.size()[1])
+        if n_groups > 0:
+            for t in range(0, n_groups, n_frames_D):
+                skip = B_all[:, (-span-t-1):-t:n_frames_Ds].contiguous() if t != 0 else B_all[:, -span-1::n_frames_Ds].contiguous()
+                B_skipped[s] = torch.cat([B_skipped[s], skip]) if B_skipped[s] is not None else skip
+    max_prev_frames = n_frames_D ** (t_scales-1) * (n_frames_D-1)
+    if B_all.size()[1] > max_prev_frames:
+        B_all = B_all[:, -max_prev_frames:]
+    return B_all, B_skipped
+
+# get temporally subsampled frames for flows
+def get_skipped_flows(flowNet, flow_ref_all, conf_ref_all, real_B, flow_ref, conf_ref, t_scales, n_frames_D):
+    flow_ref_skipped, conf_ref_skipped = [None] * t_scales, [None] * t_scales
+    flow_ref_all, flow = get_skipped_frames(flow_ref_all, flow_ref, 1, n_frames_D)
+    conf_ref_all, conf = get_skipped_frames(conf_ref_all, conf_ref, 1, n_frames_D)
+    if flow[0] is not None:
+        flow_ref_skipped[0], conf_ref_skipped[0] = flow[0][:,1:], conf[0][:,1:]
+
+    for s in range(1, t_scales):
+        if real_B[s] is not None and real_B[s].size()[1] == n_frames_D:
+            flow_ref_skipped[s], conf_ref_skipped[s] = flowNet(real_B[s][:,1:], real_B[s][:,:-1])
+    return flow_ref_all, conf_ref_all, flow_ref_skipped, conf_ref_skipped
+
+# Converts a Tensor into a Numpy array
+# |imtype|: the desired type of the converted numpy array
+def tensor2im(image_tensor, imtype=np.uint8, normalize=True):
+    if isinstance(image_tensor, list):
+        image_numpy = []
+        for i in range(len(image_tensor)):
+            image_numpy.append(tensor2im(image_tensor[i], imtype, normalize))
+        return image_numpy
+
+    if isinstance(image_tensor, torch.autograd.Variable):
+        image_tensor = image_tensor.data
+    if len(image_tensor.size()) == 4:
+        image_tensor = image_tensor[0]
+    image_numpy = image_tensor.cpu().float().numpy()
+    if normalize:
+        image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * 255.0
+    else:
+        image_numpy = np.transpose(image_numpy, (1, 2, 0)) * 255.0
+    #image_numpy = (np.transpose(image_numpy, (1, 2, 0)) * std + mean)  * 255.0
+    image_numpy = np.clip(image_numpy, 0, 255)
+    if image_numpy.shape[2] == 1:
+        image_numpy = image_numpy[:,:,0]
+    elif image_numpy.shape[2] == 2: # uv image case
+        zeros = np.zeros((image_numpy.shape[0], image_numpy.shape[1], 1)).astype(int)
+        image_numpy = np.concatenate([image_numpy, zeros], 2)
+    return image_numpy.astype(imtype)
+
+def tensor2flow(output, imtype=np.uint8):
+    if isinstance(output, torch.autograd.Variable):
+        output = output.data
+    if len(output.size()) == 4:
+        output = output[0]
+    output = output.cpu().float().numpy()
+    output = np.transpose(output, (1, 2, 0))
+    #mag = np.max(np.sqrt(output[:,:,0]**2 + output[:,:,1]**2))
+    #print(mag)
+    hsv = np.zeros((output.shape[0], output.shape[1], 3), dtype=np.uint8)
+    hsv[:, :, 0] = 255
+    hsv[:, :, 1] = 255
+    mag, ang = cv2.cartToPolar(output[..., 0], output[..., 1])
+    hsv[..., 0] = ang * 180 / np.pi / 2
+    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+    rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
+    return rgb
+
+def save_image(image_numpy, image_path):
+    image_pil = Image.fromarray(image_numpy)
+    image_pil.save(image_path)
+
+def print_numpy(x, val=True, shp=False):
+    x = x.astype(np.float64)
+    if shp:
+        print('shape,', x.shape)
+    if val:
+        x = x.flatten()
+        print('mean = %3.3f, min = %3.3f, max = %3.3f, median = %3.3f, std=%3.3f' % (
+            np.mean(x), np.min(x), np.max(x), np.median(x), np.std(x)))
+
+def mkdirs(paths):
+    if isinstance(paths, list) and not isinstance(paths, str):
+        for path in paths:
+            mkdir(path)
+    else:
+        mkdir(paths)
+
+def mkdir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+def fit_mouth_in_frame(mc, loadSize, mouthSize):
+    mc_w, mc_h = mc[0], mc[1]
+    mc_h = torch.tensor(int(mouthSize/2), dtype=torch.int32).cuda() if mc_h < int(mouthSize/2) else mc_h
+    mc_w = torch.tensor(int(mouthSize/2), dtype=torch.int32).cuda() if mc_w < int(mouthSize/2) else mc_w
+    mc_h = torch.tensor(loadSize - int(mouthSize/2), dtype=torch.int32).cuda() if mc_h > loadSize - int(mouthSize/2) else mc_h
+    mc_w = torch.tensor(loadSize - int(mouthSize/2), dtype=torch.int32).cuda() if mc_w > loadSize - int(mouthSize/2) else mc_w
+    return (mc_w, mc_h)
+
+def get_mouth(img, mc, mouthSize):
+    ret = img[..., mc[1]-int(mouthSize/2):mc[1]+int(mouthSize/2),
+                   mc[0]-int(mouthSize/2):mc[0]+int(mouthSize/2)]
+    return ret
+
+def get_error_heatmap(rgb_video_images, fake_images, mask=None):
+    # Average distance
+    error = abs(rgb_video_images.astype(np.int32) - fake_images.astype(np.int32))
+    if mask is not None:
+        distance = np.linalg.norm(error, axis=2) * mask
+        n_pixels = mask.sum()
+    else:
+        distance = np.linalg.norm(error, axis=2)
+        n_pixels = distance.shape[0] * distance.shape[1]
+    sum_distance = distance.sum()
+    maximum = 50.0
+    minimum = 0.0
+    maxim = maximum * np.ones_like(distance)
+    distance_trunc = np.minimum(distance, maxim)
+    zeros = np.zeros_like(distance)
+    ratio = 2 * (distance_trunc-minimum) / (maximum - minimum)
+    b = np.maximum(zeros, 255*(1 - ratio))
+    r = np.maximum(zeros, 255*(ratio - 1))
+    g = 255 - b - r
+    heatmap = np.stack([r, g, b], axis=2).astype(np.uint8)
+    return heatmap, sum_distance, n_pixels
+
+def get_hamming_distance(mask1, mask2):
+    mask1 = mask1.copy()
+    mask2 = mask2.copy()
+    mask1[mask1>127] = 255
+    mask1[mask1<=127] = 0
+    mask2[mask2>127] = 255
+    mask2[mask2<=127] = 0
+    return distance.hamming(mask1.flatten(), mask2.flatten())
+
+def get_IoU(mask1, mask2):
+    mask1 = mask1.copy()
+    mask2 = mask2.copy()
+    mask1[mask1>127] = 1
+    mask1[mask1!=1] = 0
+    mask2[mask2>127] = 1
+    mask2[mask2!=1] = 0
+    # True for foreground.
+    overlap = np.sum(np.logical_and(mask1, mask2))
+    union = np.sum(np.logical_or(mask1, mask2))
+    return overlap / union
+
+def get_masks_visual_error(mask1, mask2):
+    mask1 = np.array(mask1, np.uint)
+    mask2 = np.array(mask2, np.uint)
+    mask1[mask1>127] = 255
+    mask1[mask1<=127] = 0
+    mask2[mask2>127] = 255
+    mask2[mask2<=127] = 0
+    mask = mask1 - mask2
+    return np.dstack([255*np.ones_like(mask), 255-mask, 255-mask]).astype(np.uint8)
