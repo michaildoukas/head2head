@@ -5,6 +5,6 @@ checkpoints/
 datasets/
 models/flownet2_pytorch/*.tar
 results/
-videos/
+videos/*.mp4
 preprocessing/models/
 preprocessing/files/

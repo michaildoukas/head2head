@@ -49,31 +49,6 @@ def save_images(images, name, split, args):
             os.makedirs(save_dir)
         save_image(images[i], os.path.join(save_dir, n_frame + '.png'))
 
-def save_video(images, name, split, fps, args):
-    video_path = os.path.join(args.dataset_path, split, 'videos', name + '.avi')
-    writer = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'MJPG'), fps,
-                             (images[0].shape[2], images[0].shape[1]), True)
-    if split == 'train':
-        n_parts = len(images) // args.train_seq_length
-        n_images = n_parts  * args.train_seq_length
-    else:
-        n_images = len(images)
-    for i in range(n_images):
-        writer.write(np.transpose(images[i], (1,2,0))[:,:,::-1])
-    writer.release()
-
-def get_split_dict(csv_file, args):
-    if os.path.exists(csv_file):
-        csv = pd.read_csv(csv_file)
-        names = list(csv['filename'])
-        names = [os.path.splitext(name)[0] for name in names]
-        splits = list(csv['split'])
-        split_dict = dict(zip(names, splits))
-        return split_dict, set(val for val in split_dict.values())
-    else:
-        print('No metadata file found. All samples will be saved in the %s split.' % args.default_split)
-        return None, set([args.default_split])
-
 def get_video_paths_dict(dir):
     # Returns dict: {video_name: path, ...}
     if os.path.exists(dir) and is_video_file(dir):
@@ -115,7 +90,7 @@ def read_mp4(mp4_path, args):
     images = np.stack(images)
     return images, fps
 
-def check_boxes(boxes, name, split, img_size, args):
+def check_boxes(boxes, name, img_size, args):
     # Check if there are None boxes. Fix them if only a few (like 5) are None
     not_detected_cases = 0
     for i in range(len(boxes)):
@@ -164,7 +139,7 @@ def check_boxes(boxes, name, split, img_size, args):
         boxes[i] = list(new_boxes[i,:])
     return True, boxes
 
-def get_faces(detector, images, name, split, args):
+def get_faces(detector, images, name, args):
     ret_faces = []
     all_boxes = []
     all_imgs = []
@@ -176,7 +151,7 @@ def get_faces(detector, images, name, split, args):
         all_imgs.extend(imgs_pil)
     # Check if boxes are fine and do temporal smoothing.
     img_size = (all_imgs[0].size[0] + all_imgs[0].size[1]) / 2
-    stat, all_boxes = check_boxes(all_boxes, name, split, img_size, args)
+    stat, all_boxes = check_boxes(all_boxes, name, img_size, args)
     # Crop face regions.
     if stat:
         for img, box in zip(all_imgs, all_boxes):
@@ -186,7 +161,7 @@ def get_faces(detector, images, name, split, args):
 
 def detect_and_save_faces(detector, name, mp4_path, split, args):
     images, fps = read_mp4(mp4_path, args)
-    stat, face_images = get_faces(detector, images, name, split, args)
+    stat, face_images = get_faces(detector, images, name, args)
     if stat:
         save_images(tensor2npimage(face_images), name, split, args)
     return stat
@@ -240,8 +215,6 @@ def main():
     else:
         print('GPU device not available. Exit')
         exit(0)
-
-    splits = ['train', 'test']
 
     # Store video paths in dictionary.
     mp4_paths_dict = get_video_paths_dict(args.original_videos_path)

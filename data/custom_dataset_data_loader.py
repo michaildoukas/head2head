@@ -7,7 +7,6 @@ def CreateDataset(opt):
         dataset = videoDataset()
     else:
         raise ValueError('Unrecognized dataset')
-    #print("dataset [%s] was created" % (dataset.name()))
     dataset.initialize(opt)
     return dataset
 

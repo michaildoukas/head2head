@@ -37,11 +37,11 @@ def make_video_dataset(dir, target_name):
                     paths.append(os.path.join(root, f))
             if len(paths) > 0:
                 images.append(paths)
-        min_len = float("inf")
-        for img_dir in images:
-            min_len = min(min_len, len(img_dir))
-        for i in range(len(images)):
-            images[i] = images[i][0:min_len]
+    #    min_len = float("inf")
+    #    for img_dir in images:
+    #        min_len = min(min_len, len(img_dir))
+    #    for i in range(len(images)):
+    #        images[i] = images[i][0:min_len]
     return images
 
 def assert_valid_pairs(A_paths, B_paths):

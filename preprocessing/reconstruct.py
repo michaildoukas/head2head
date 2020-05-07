@@ -16,7 +16,7 @@ def mkdir(path):
         os.makedirs(path)
 
 def make_dirs(name, image_pths, args):
-    id_coeffs_path = None
+    id_coeffs_paths = []
     nmfc_pths = [p.replace('/images/', '/nmfcs/') for p in image_pths]
     out_paths = set(os.path.dirname(nmfc_pth) for nmfc_pth in nmfc_pths)
     for out_path in out_paths:
@@ -28,10 +28,12 @@ def make_dirs(name, image_pths, args):
         if args.save_exp_params:
             mkdir(out_path.replace('/nmfcs/', '/exp_coeffs/'))
     if args.save_id_params:
-        dir = os.path.dirname(os.path.dirname(os.path.dirname(nmfc_pths[0])))
-        id_coeffs_path = os.path.join(dir, 'id_coeffs')
-        mkdir(id_coeffs_path)
-    return id_coeffs_path
+        splits = set(os.path.dirname(os.path.dirname(os.path.dirname(nmfc_pth))) for nmfc_pth in nmfc_pths)
+        for split in splits:
+            id_coeffs_path = os.path.join(split, 'id_coeffs')
+            mkdir(id_coeffs_path)
+            id_coeffs_paths.append(id_coeffs_path)
+    return id_coeffs_paths
 
 def remove_images(name, image_pths):
     # Remove images
@@ -42,7 +44,7 @@ def remove_images(name, image_pths):
 
 def save_results(nmfcs, reconstruction_output, name, image_pths, args):
     # Create save directories
-    id_coeffs_path = make_dirs(name, image_pths, args)
+    id_coeffs_paths = make_dirs(name, image_pths, args)
     # Save
     SRT_vecs = []
     for nmfc, cam_param, _, exp_param, landmark5, image_pth in zip(nmfcs, *reconstruction_output, image_pths):
@@ -65,8 +67,9 @@ def save_results(nmfcs, reconstruction_output, name, image_pths, args):
             np.savetxt(exp_params_file, exp_param)
     if args.save_id_params:
         avg_id_params = np.mean(np.array(reconstruction_output[1]), axis=0)
-        id_params_file = os.path.join(id_coeffs_path, name + '.txt')
-        np.savetxt(id_params_file, avg_id_params)
+        for id_coeffs_path in id_coeffs_paths:
+            id_params_file = os.path.join(id_coeffs_path, name + '.txt')
+            np.savetxt(id_params_file, avg_id_params)
 
 IMG_EXTENSIONS = ['.png']
 
@@ -113,7 +116,7 @@ def main():
     print('---------- 3D face reconstruction --------- \n')
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, default='datasets/videos', help='Path to the dataset directory.')
-    parser.add_argument('--gpu_id', type=int, default='1', help='Negative value to use CPU, or greater equal than zero for GPU id.')
+    parser.add_argument('--gpu_id', type=int, default='0', help='Negative value to use CPU, or greater equal than zero for GPU id.')
     parser.add_argument('--save_cam_params', action='store_true', default=True, help='Save the Scale, Rotation and Translation camera params for each frame.')
     parser.add_argument('--save_id_params', action='store_true', default=True, help='Save the average identity coefficient vector for each video.')
     parser.add_argument('--save_landmarks5', action='store_true', default=True, help='Save 5 facial landmarks for each frame.')

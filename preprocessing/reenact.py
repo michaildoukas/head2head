@@ -1,6 +1,7 @@
 import cv2
 import os
 import numpy as np
+import torch
 import argparse
 import sys
 import scipy.io as io
@@ -14,9 +15,12 @@ def mkdirs(paths):
             os.makedirs(path)
 
 def save_results(source_nmfcs, source_images_paths, args):
-    assert len(source_nmfcs) == len(source_images_paths), 'Rendered NMFC and original source sequence have different lengths.'
-    save_nmfcs_dir = os.path.join(args.data_path, args.split_t, 'source_nmfcs', args.target_id + '_' + args.source_id)
-    save_images_dir = os.path.join(args.data_path, args.split_t, 'source_images', args.target_id + '_' + args.source_id)
+    assert len(source_nmfcs) == len(source_images_paths), \
+            'Rendered NMFC and original source sequence have different lengths.'
+    save_nmfcs_dir = os.path.join(args.dataset_path, args.split_t,
+                        'source_nmfcs', args.target_id + '_' + args.source_id)
+    save_images_dir = os.path.join(args.dataset_path, args.split_t,
+                        'source_images', args.target_id + '_' + args.source_id)
     mkdirs([save_nmfcs_dir, save_images_dir])
     for i, source_images_path in enumerate(source_images_paths):
         frame_name = os.path.basename(source_images_path)
@@ -25,21 +29,35 @@ def save_results(source_nmfcs, source_images_paths, args):
 
 def compute_cam_params(s_cam_params, t_cam_params, args):
     cam_params = s_cam_params
-    # TODO: include variance standardization.
-    if args.keep_avg_S:
-        # Average Scale across video for source and target.
-        avg_S_target = np.mean([params[0] for params in t_cam_params])
-        avg_S_source = np.mean([params[0] for params in s_cam_params])
-        S = [params[0]-avg_S_source+avg_S_target for params in s_cam_params]
+    if args.adapt_scale:
+        mean_S_target = np.mean([params[0] for params in t_cam_params])
+        mean_S_source = np.mean([params[0] for params in s_cam_params])
+        if args.standardize:
+            std_S_target = np.std([params[0] for params in t_cam_params])
+            std_S_source = np.std([params[0] for params in s_cam_params])
+            S = [(params[0] - mean_S_source) * std_S_target / std_S_source \
+                 + mean_S_target for params in s_cam_params]
+        else:
+            S = [params[0] - mean_S_source + mean_S_target
+                 for params in s_cam_params]
         # Normalised Translation for source and target.
-        norm_T_target = [params[2] / params[0] for params in t_cam_params]
-        norm_T_source = [params[2] / params[0] for params in s_cam_params]
-        cam_params = [(s, params[1], s * t) for s, t, params in zip(S, norm_T_source, s_cam_params)]
-        if args.keep_avg_S_and_T:
-            # Average Normalised Translation across video for source and target.
-            avg_norm_T_target = np.mean(norm_T_target, axis=0)
-            avg_norm_T_source = np.mean(norm_T_source, axis=0)
-            cam_params = [(s, params[1], s * (t-avg_norm_T_source+avg_norm_T_target)) for s, t, params in zip(S, norm_T_source, s_cam_params)]
+        nT_target = [params[2] / params[0] for params in t_cam_params]
+        nT_source = [params[2] / params[0] for params in s_cam_params]
+        cam_params = [(s, params[1], s * t) \
+                      for s, params, t in zip(S, s_cam_params, nT_source)]
+        if args.adapt_scale_and_translation:
+            mean_nT_target = np.mean(nT_target, axis=0)
+            mean_nT_source = np.mean(nT_source, axis=0)
+            if args.standardize:
+                std_nT_target = np.std(nT_target, axis=0)
+                std_nT_source = np.std(nT_source, axis=0)
+                nT = [(t - mean_nT_source) * std_nT_target / std_nT_source \
+                     + mean_nT_target for t in nT_source]
+            else:
+                nT = [t - mean_nT_source + mean_nT_target
+                      for t in nT_source]
+            cam_params = [(s, params[1], s * t) \
+                          for s, params, t in zip(S, s_cam_params, nT)]
     return cam_params
 
 def read_params(params_type, path, speaker_id):
@@ -55,7 +73,8 @@ def read_params(params_type, path, speaker_id):
         for part in sorted(parts):
             dir = os.path.join(path, part)
             if base_part in dir:
-                txt_files.extend([os.path.join(dir, txt) for txt in sorted(os.listdir(dir))])
+                txt_files.extend([os.path.join(dir, txt) \
+                                 for txt in sorted(os.listdir(dir))])
         for f in txt_files:
             if os.path.exists(f):
                 if params_type == 'exp':
@@ -82,14 +101,35 @@ def print_args(parser, args):
 def main():
     print('--------- Create reenactment NMFC --------- \n')
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', type=str, default='datasets/headDataset/dataset', help='Path to the dataset directory.')
-    parser.add_argument('--split_s', type=str, default='test', help='Split were source identity belongs.')
-    parser.add_argument('--split_t', type=str, default='test', help='Split were target identity belongs.')
-    parser.add_argument('--source_id', type=str, default='000000', help='Id/name of the source person.')
-    parser.add_argument('--target_id', type=str, default='000005', help='Id/name of the target person.')
-    parser.add_argument('--keep_avg_S', action='store_true', default=True, help='Keep the average scale from target video.')
-    parser.add_argument('--keep_avg_S_and_T', action='store_true', default=True, help='Keep the average translation from target video.')
-    parser.add_argument('--gpu_id', type=int, default='-1', help='Negative value to use CPU, or greater equal than zero for GPU id.')
+    parser.add_argument('--dataset_path', type=str,
+                        default='datasets/videos',
+                        help='Path to the dataset directory.')
+    parser.add_argument('--split_s', type=str,
+                        default='test',
+                        help='Split were source identity belongs.')
+    parser.add_argument('--split_t', type=str,
+                        default='test',
+                        help='Split were target identity belongs.')
+    parser.add_argument('--source_id', type=str,
+                        default='dicaprio',
+                        help='Id/name of the source person.')
+    parser.add_argument('--target_id', type=str,
+                        default='trudeau',
+                        help='Id/name of the target person.')
+    parser.add_argument('--adapt_scale', action='store_true',
+                        default=True,
+                        help='Perform scale adaptation using statistics \
+                              from target video.')
+    parser.add_argument('--adapt_scale_and_translation', action='store_true',
+                        default=True,
+                        help='Perform scale and adaptation standardization \
+                              using statistics from target video.')
+    parser.add_argument('--standardize', action='store_true',
+                        help='Perform adaptation using std from videos.')
+    parser.add_argument('--gpu_id', type=int,
+                        default='0',
+                        help='Negative value to use CPU, or greater equal than \
+                              zero for GPU id.')
     args = parser.parse_args()
     # Figure out the device
     args.gpu_id = int(args.gpu_id)
@@ -109,18 +149,23 @@ def main():
     # Initialize the NMFC renderer.
     renderer = NMFCRenderer(args)
     # Read the expression parameters from the source person.
-    exp_params, paths = read_params('exp', os.path.join(args.data_path, args.split_s, 'exp_coeffs'), args.source_id)
+    exp_params, paths = read_params('exp', os.path.join(args.dataset_path,
+                                    args.split_s, 'exp_coeffs'), args.source_id)
     # Read the identity parameters from the target person.
-    id_params, _ = read_params('id', os.path.join(args.data_path, args.split_t, 'id_coeffs'), args.target_id)
+    id_params, _ = read_params('id', os.path.join(args.dataset_path,
+                               args.split_t, 'id_coeffs'), args.target_id)
     id_params = [id_params] * len(exp_params)
     # Read camera parameters from source
-    s_cam_params, _ = read_params('cam', os.path.join(args.data_path, args.split_s, 'misc'), args.source_id)
+    s_cam_params, _ = read_params('cam', os.path.join(args.dataset_path,
+                                  args.split_s, 'misc'), args.source_id)
     # Read camera parameters from target
-    t_cam_params, _ = read_params('cam', os.path.join(args.data_path, args.split_t, 'misc'), args.target_id)
+    t_cam_params, _ = read_params('cam', os.path.join(args.dataset_path,
+                                  args.split_t, 'misc'), args.target_id)
     # Compute the camera parameters.
     cam_params = compute_cam_params(s_cam_params, t_cam_params, args)
     source_nmfcs = renderer.computeNMFCs(cam_params, id_params, exp_params)
-    source_images_paths = [os.path.splitext(path.replace('exp_coeffs', 'images'))[0] + '.png' for path in paths]
+    source_images_paths = [os.path.splitext(path.replace('exp_coeffs',
+                           'images'))[0] + '.png' for path in paths]
     save_results(source_nmfcs, source_images_paths, args)
     # Clean
     renderer.clear()
