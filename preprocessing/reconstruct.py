@@ -6,6 +6,7 @@ import sys
 import collections
 import torch
 from shutil import copyfile, rmtree
+from tqdm import tqdm
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
@@ -47,7 +48,8 @@ def save_results(nmfcs, reconstruction_output, name, image_pths, args):
     id_coeffs_paths = make_dirs(name, image_pths, args)
     # Save
     SRT_vecs = []
-    for nmfc, cam_param, _, exp_param, landmark5, image_pth in zip(nmfcs, *reconstruction_output, image_pths):
+    print('Saving results')
+    for nmfc, cam_param, _, exp_param, landmark5, image_pth in tqdm(zip(nmfcs, *reconstruction_output, image_pths), total=len(image_pths)):
         S, R, T = cam_param
         nmfc_pth = image_pth.replace('/images/', '/nmfcs/')
         SRT_vecs.append((nmfc_pth, np.concatenate([np.array([S]), np.array(R).ravel(), np.array(T).ravel()])))

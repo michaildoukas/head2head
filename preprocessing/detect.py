@@ -9,6 +9,7 @@ import argparse
 from facenet_pytorch import MTCNN, extract_face
 import matplotlib.pyplot as plt
 import collections
+from tqdm import tqdm
 
 VID_EXTENSIONS = ['.mp4']
 
@@ -31,19 +32,23 @@ def save_image(image_numpy, image_path):
     image_pil = Image.fromarray(image_numpy)
     image_pil.save(image_path)
 
-def save_images(images, name, split, args):
-    if split == 'train':
-        n_parts = len(images) // args.train_seq_length
+def save_images(images, name, split, start_i, is_last, args):
+    if split == 'train' and is_last:
+        n_parts = (len(images) + start_i) // args.train_seq_length
         assert n_parts - args.n_parts_test > 0, 'Number of test parts is more than available parts.'
-        n_images_train = (n_parts - args.n_parts_test)  * args.train_seq_length
+        n_images_train = (n_parts - args.n_parts_test) * args.train_seq_length - start_i
         n_images_test = len(images) - n_images_train
+    elif split == 'train':
+        n_images_train = len(images)
+        n_images_test = 0
     else:
         n_images_train = 0
         n_images_test = len(images)
-    for i in range(len(images)):
+    print('Saving images')
+    for i in tqdm(range(len(images))):
         split_i = 'train' if i < n_images_train else 'test'
-        n_frame = "{:06d}".format(i * args.n_skip_frames)
-        part = "_{:06d}".format(i // args.train_seq_length) if split == 'train' and i < n_images_train else ""
+        n_frame = "{:06d}".format(i + start_i)
+        part = "_{:06d}".format((i + start_i) // args.train_seq_length) if split == 'train' and i < n_images_train else ""
         save_dir = os.path.join(args.dataset_path, split_i, 'images', name + part)
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
@@ -52,19 +57,24 @@ def save_images(images, name, split, args):
 def get_video_paths_dict(dir):
     # Returns dict: {video_name: path, ...}
     if os.path.exists(dir) and is_video_file(dir):
-        # If path to single .mp4 file was giveen directly.
+        # If path to single .mp4 file was given directly.
         # If '_' in file name remove it.
         video_files = {os.path.splitext(os.path.basename(dir))[0].replace('_', '') : dir}
     else:
         video_files = {}
         assert os.path.isdir(dir), '%s is not a valid directory' % dir
         for root, _, fnames in sorted(os.walk(dir)):
-            for fname in fnames:
+            for fname in sorted(fnames):
                 if is_video_file(fname):
                     path = os.path.join(root, fname)
                     video_name = os.path.splitext(fname)[0]
+                    # If part of video
+                    if '_part_' in video_name:
+                        video_name = video_name.split('_part_')[0]
                     if video_name not in video_files:
-                        video_files[video_name] = path
+                        video_files[video_name] = [path]
+                    else:
+                        video_files[video_name].append(path)
     return collections.OrderedDict(sorted(video_files.items()))
 
 def is_video_path_processed(name, split, args):
@@ -77,20 +87,18 @@ def read_mp4(mp4_path, args):
     fps = reader.get(cv2.CAP_PROP_FPS)
     images = []
     n_frames = int(reader.get(cv2.CAP_PROP_FRAME_COUNT))
-    for i in range(n_frames):
+    print('Reading %s' % mp4_path)
+    for i in tqdm(range(n_frames)):
         _, image = reader.read()
         if image is None:
             break
         else:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        if i % args.n_skip_frames == 0:
-            images.append(image)
+        images.append(image)
     reader.release()
-    #print('Number of frames read: ' + str(len(images)))
-    images = np.stack(images)
     return images, fps
 
-def check_boxes(boxes, name, img_size, args):
+def check_boxes(boxes, img_size, args):
     # Check if there are None boxes. Fix them if only a few (like 5) are None
     not_detected_cases = 0
     for i in range(len(boxes)):
@@ -139,31 +147,42 @@ def check_boxes(boxes, name, img_size, args):
         boxes[i] = list(new_boxes[i,:])
     return True, boxes
 
-def get_faces(detector, images, name, args):
+def get_faces(detector, images, box, args):
     ret_faces = []
     all_boxes = []
     all_imgs = []
-    # Get bounding boxes
-    for lb in np.arange(0, len(images), args.mtcnn_batch_size):
-        imgs_pil = [Image.fromarray(image) for image in images[lb:lb+args.mtcnn_batch_size]]
-        boxes, _, _ = detector.detect(imgs_pil, landmarks=True)
-        all_boxes.extend(boxes)
-        all_imgs.extend(imgs_pil)
-    # Check if boxes are fine and do temporal smoothing.
-    img_size = (all_imgs[0].size[0] + all_imgs[0].size[1]) / 2
-    stat, all_boxes = check_boxes(all_boxes, name, img_size, args)
+    if box is None:
+        # Get bounding boxes
+        print('Getting bounding boxes')
+        for lb in tqdm(np.arange(0, len(images), args.mtcnn_batch_size)):
+            imgs_pil = [Image.fromarray(image) for image in images[lb:lb+args.mtcnn_batch_size]]
+            boxes, _, _ = detector.detect(imgs_pil, landmarks=True)
+            all_boxes.extend(boxes)
+            all_imgs.extend(imgs_pil)
+        # Check if boxes are fine and do temporal smoothing.
+        img_size = (all_imgs[0].size[0] + all_imgs[0].size[1]) / 2
+        stat, all_boxes = check_boxes(all_boxes, img_size, args)
+    else:
+        all_imgs = [Image.fromarray(image) for image in images]
+        stat, all_boxes = True, np.stack([box] * len(all_imgs), axis=0)
     # Crop face regions.
     if stat:
-        for img, box in zip(all_imgs, all_boxes):
+        print('Extracting faces')
+        for img, box in tqdm(zip(all_imgs, all_boxes), total=len(all_boxes)):
             face = extract_face(img, box, args.cropped_image_size, args.margin)
             ret_faces.append(face)
-    return stat, ret_faces
+    return stat, ret_faces, all_boxes[0]
 
-def detect_and_save_faces(detector, name, mp4_path, split, args):
-    images, fps = read_mp4(mp4_path, args)
-    stat, face_images = get_faces(detector, images, name, args)
-    if stat:
-        save_images(tensor2npimage(face_images), name, split, args)
+def detect_and_save_faces(detector, name, mp4_paths, split, args):
+    start_i = 0
+    box = None
+    for n, mp4_path in enumerate(mp4_paths):
+        is_last = n == len(mp4_paths) - 1
+        images, fps = read_mp4(mp4_path, args)
+        stat, face_images, box = get_faces(detector, images, box, args)
+        if stat:
+            save_images(tensor2npimage(face_images), name, split, start_i, is_last, args)
+            start_i += len(images)
     return stat
 
 def print_args(parser, args):
@@ -189,7 +208,6 @@ def main():
     parser.add_argument('--mtcnn_batch_size', default=6, type=int, help='The number of frames for face detection.')
     parser.add_argument('--cropped_image_size', default=256, type=int, help='The size of frames after cropping the face.')
     parser.add_argument('--margin', default=100, type=int, help='.')
-    parser.add_argument('--n_skip_frames', default=1, type=int, help='The sampling frame rate from videos.')
     parser.add_argument('--None_threshold', default=10, type=int, help='Max number of allowed None bounding boxes in a video.')
     parser.add_argument('--dst_threshold', default=0.3, type=float, help='Max L_inf distance between any bounding boxes in a video. (normalised by image size: (h+w)/2)')
     parser.add_argument('--window_length', default=99, type=int, help='savgol filter window length.')
@@ -231,11 +249,11 @@ def main():
         if not is_video_path_processed(name, args.default_split, args):
             success = detect_and_save_faces(detector, name, path, args.default_split, args)
             if success:
-                print('(%d/%d) %s (%s file) [SUCCESS]' % (n_completed, n_mp4s, path, args.default_split))
+                print('(%d/%d) %s (%s file) [SUCCESS]' % (n_completed, n_mp4s, path[0], args.default_split))
             else:
-                print('(%d/%d) %s (%s file) [FAILED]' % (n_completed, n_mp4s, path, args.default_split))
+                print('(%d/%d) %s (%s file) [FAILED]' % (n_completed, n_mp4s, path[0], args.default_split))
         else:
-            print('(%d/%d) %s (%s file) already processed!' % (n_completed, n_mp4s, path, args.default_split))
+            print('(%d/%d) %s (%s file) already processed!' % (n_completed, n_mp4s, path[0], args.default_split))
 
 if __name__ == "__main__":
     main()

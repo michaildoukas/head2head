@@ -7,7 +7,7 @@ import sys
 import scipy.io as io
 import glob
 from scipy import optimize
-
+from tqdm import tqdm
 from multiface import fc_predictor
 from avatars import serialize
 from hephaestus import hephaestus_bindings as hephaestus
@@ -201,7 +201,8 @@ class NMFCRenderer:
         cam_params, id_params, exp_params, landmarks5 = ([] for i in range(4))
         success = True
         # Perform 3D face reconstruction for each given frame.
-        for image_pth in image_pths:
+        print('Performing face reconstruction')
+        for image_pth in tqdm(image_pths):
             # Read current frame
             frame = cv2.imread(image_pth)
             # Check if frame was successfully read.
@@ -237,7 +238,8 @@ class NMFCRenderer:
     def computeNMFCs(self, cam_params, id_params, exp_params):
         nmfcs = []
         # Compute NMFCs from reconstruction parameters of frames.
-        for cam_param, id_param, exp_param in zip(cam_params, id_params, exp_params):
+        print('Computing NMFCs')
+        for cam_param, id_param, exp_param in tqdm(zip(cam_params, id_params, exp_params), total=len(cam_params)):
             # Get Scale, Rotation, Translation
             S, R, T = cam_param
             # Compute face without pose.
