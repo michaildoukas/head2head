@@ -28,6 +28,9 @@ print('Generating %d frames' % dataset_size)
 suffix = '_reenactment' if opt.do_reenactment else ''
 save_dir = os.path.join(opt.results_dir, opt.name, '%s_%s_%s' % (opt.phase + suffix, os.path.basename(opt.dataroot), opt.which_epoch))
 
+total_distance, total_pixels = 0, 0
+mtotal_distance, mtotal_pixels = 0, 0
+
 for i, data in enumerate(dataset):
     if opt.time_fwd_pass:
         start = torch.cuda.Event(enable_timing=True)
@@ -56,17 +59,32 @@ for i, data in enumerate(dataset):
         torch.cuda.synchronize()
         print('Forward pass time: %.6f' % start.elapsed_time(end))
 
-    fake_frames = util.tensor2im(generated[0].data[0])
-    rgb_frames = util.tensor2im(rgb_video[0, -1])
-    nmfc_frames = util.tensor2im(nmfc_video[0, -1], normalize=False)
+    fake_frame = util.tensor2im(generated[0].data[0])
+    rgb_frame = util.tensor2im(rgb_video[0, -1])
+    nmfc_frame = util.tensor2im(nmfc_video[0, -1], normalize=False)
     if not opt.no_eye_gaze:
-        eye_gaze_frames = util.tensor2im(eye_gaze_video[0, -1], normalize=False)
+        eye_gaze_frame = util.tensor2im(eye_gaze_video[0, -1], normalize=False)
 
-    visual_list = [('rgb_video', rgb_frames),
-                   ('fake_video', fake_frames),
-                   ('nmfc_video', nmfc_frames)]
+    visual_list = [('rgb_video', rgb_frame),
+                   ('fake_video', fake_frame),
+                   ('nmfc_video', nmfc_frame)]
     if not opt.no_eye_gaze:
-        visual_list += [('eye_gaze_video', eye_gaze_frames)]
+        visual_list += [('eye_gaze_video', eye_gaze_frame)]
+
+    # If in self reenactment mode, compute pixel error and heatmap.
+    if not opt.do_reenactment:
+        total_distance, total_pixels, heatmap = util.get_pixel_distance(
+                rgb_frame, fake_frame, total_distance, total_pixels)
+        mtotal_distance, mtotal_pixels, mheatmap = util.get_pixel_distance(
+            rgb_frame, fake_frame, mtotal_distance, mtotal_pixels, nmfc_frame)
+        visual_list += [('heatmap', heatmap),
+                        ('masked_heatmap', mheatmap)]
 
     visuals = OrderedDict(visual_list)
     visualizer.save_images(save_dir, visuals, img_path[-1])
+
+if not opt.do_reenactment:
+    # Average Pixel Distance (APD)
+    print('Average pixel distance for sequence %0.2f' % (total_distance/total_pixels))
+    # Masked Average Pixel Distance (MAPD)
+    print('Masked average pixel distance for sequence %0.2f' % (mtotal_distance/mtotal_pixels))

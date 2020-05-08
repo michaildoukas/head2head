@@ -64,13 +64,15 @@ def print_args(parser, args):
     print(message)
 
 def main():
-    print('--- Create .mp4 video file from images --- \n')
+    print('---- Create .mp4 video file from images --- \n')
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', type=str,
                         default='head2head_trudeau',
                         help='Name of model we used to generate the results.')
     parser.add_argument('--only_fake_frames', action='store_true',
                         help='Write only the fake frames to the video file.')
+    parser.add_argument('--show_heatmaps', action='store_true',
+                        help='.')
     args = parser.parse_args()
     print_args(parser, args)
 
@@ -96,6 +98,12 @@ def main():
                 video_list = [fake_video]
             else:
                 video_list = [rgb_video, nmfc_video, fake_video]
+            if args.show_heatmaps:
+                heatmap_video = images_to_video(imgs, '/heatmap')
+                masked_heatmap_video = images_to_video(imgs, '/masked_heatmap')
+                assert heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+                assert masked_heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+                video_list.extend([heatmap_video, masked_heatmap_video])
             final_video = np.concatenate(video_list, axis=2)
             write_video_to_file(save_path, final_video)
 

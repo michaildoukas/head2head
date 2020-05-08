@@ -130,16 +130,30 @@ def get_mouth(img, mc, mouthSize):
                    mc[0]-int(mouthSize/2):mc[0]+int(mouthSize/2)]
     return ret
 
-def get_error_heatmap(rgb_video_images, fake_images, mask=None):
-    # Average distance
-    error = abs(rgb_video_images.astype(np.int32) - fake_images.astype(np.int32))
+def draw_str(image, target, s):
+    # Draw string for visualisation.
+    x, y = target
+    cv2.putText(image, s, (x+1, y+1), cv2.FONT_HERSHEY_PLAIN, 1.0, (0, 0, 0), thickness = 2, lineType=cv2.LINE_AA)
+    cv2.putText(image, s, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.0, (255, 255, 255), lineType=cv2.LINE_AA)
+
+def get_pixel_distance(rgb_frame, fake_frame, total_distance, total_pixels, nmfc_frame=None):
+    # If NMFC frame is given, use it as a mask.
+    mask = None
+    if nmfc_frame is not None:
+        mask = np.sum(nmfc_frame, axis=2)
+        mask = (mask > (np.ones_like(mask) * 0.01)).astype(np.int32)
+    # Sum rgb distance across pixels.
+    error = abs(rgb_frame.astype(np.int32) - fake_frame.astype(np.int32))
     if mask is not None:
-        distance = np.linalg.norm(error, axis=2) * mask
+        distance = np.multiply(np.linalg.norm(error, axis=2), mask)
         n_pixels = mask.sum()
     else:
         distance = np.linalg.norm(error, axis=2)
         n_pixels = distance.shape[0] * distance.shape[1]
     sum_distance = distance.sum()
+    total_distance += sum_distance
+    total_pixels += n_pixels
+    # Heatmap
     maximum = 50.0
     minimum = 0.0
     maxim = maximum * np.ones_like(distance)
@@ -150,35 +164,7 @@ def get_error_heatmap(rgb_video_images, fake_images, mask=None):
     r = np.maximum(zeros, 255*(ratio - 1))
     g = 255 - b - r
     heatmap = np.stack([r, g, b], axis=2).astype(np.uint8)
-    return heatmap, sum_distance, n_pixels
-
-def get_hamming_distance(mask1, mask2):
-    mask1 = mask1.copy()
-    mask2 = mask2.copy()
-    mask1[mask1>127] = 255
-    mask1[mask1<=127] = 0
-    mask2[mask2>127] = 255
-    mask2[mask2<=127] = 0
-    return distance.hamming(mask1.flatten(), mask2.flatten())
-
-def get_IoU(mask1, mask2):
-    mask1 = mask1.copy()
-    mask2 = mask2.copy()
-    mask1[mask1>127] = 1
-    mask1[mask1!=1] = 0
-    mask2[mask2>127] = 1
-    mask2[mask2!=1] = 0
-    # True for foreground.
-    overlap = np.sum(np.logical_and(mask1, mask2))
-    union = np.sum(np.logical_or(mask1, mask2))
-    return overlap / union
-
-def get_masks_visual_error(mask1, mask2):
-    mask1 = np.array(mask1, np.uint)
-    mask2 = np.array(mask2, np.uint)
-    mask1[mask1>127] = 255
-    mask1[mask1<=127] = 0
-    mask2[mask2>127] = 255
-    mask2[mask2<=127] = 0
-    mask = mask1 - mask2
-    return np.dstack([255*np.ones_like(mask), 255-mask, 255-mask]).astype(np.uint8)
+    if nmfc_frame is not None:
+        heatmap = np.multiply(heatmap, np.expand_dims(mask, axis=2)).astype(np.uint8)
+    draw_str(heatmap, (20, 20), "%0.1f" % (sum_distance/n_pixels))
+    return total_distance, total_pixels, heatmap
