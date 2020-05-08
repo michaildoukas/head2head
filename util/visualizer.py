@@ -123,8 +123,9 @@ class Visualizer():
             ims, txts, links = [], [], []
 
         for label, image_numpy in visuals.items():
-            image_name = '%s_%s.%s' % (label, name, 'png')
-            save_path = os.path.join(image_dir, image_name)
+            util.mkdir(os.path.join(image_dir, label))
+            image_name = '%s.%s' % (name, 'png')
+            save_path = os.path.join(image_dir, label, image_name)
             util.save_image(image_numpy, save_path)
 
             if webpage is not None:

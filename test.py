@@ -65,11 +65,11 @@ for i, data in enumerate(dataset):
     if not opt.no_eye_gaze:
         eye_gaze_frame = util.tensor2im(eye_gaze_video[0, -1], normalize=False)
 
-    visual_list = [('rgb_video', rgb_frame),
-                   ('fake_video', fake_frame),
-                   ('nmfc_video', nmfc_frame)]
+    visual_list = [('real', rgb_frame),
+                   ('fake', fake_frame),
+                   ('nmfc', nmfc_frame)]
     if not opt.no_eye_gaze:
-        visual_list += [('eye_gaze_video', eye_gaze_frame)]
+        visual_list += [('eye_gaze', eye_gaze_frame)]
 
     # If in self reenactment mode, compute pixel error and heatmap.
     if not opt.do_reenactment:

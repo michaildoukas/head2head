@@ -27,18 +27,16 @@ def write_video_to_file(video_file_path, video, mult_duration=1, n_last_frames_o
     writer.release()
     print("Sample saved to: " + video_file_path)
 
-def images_to_video(image_files_path, name):
+def images_to_video(image_names):
     # Open images
     images = []
-    image_names = [image_file for image_file in image_files_path if is_image_file(image_file) and name in image_file]
-    image_names.sort()
     for image_name in image_names:
         images.append(np.array(Image.open(image_name)))
     video = np.array(images)
     return video[:,:,:,::-1]
 
-def make_video_dataset(dir):
-    images = []
+def make_images_dict(dir):
+    images = {}
     fnames = sorted(os.walk(dir))
     for fname in sorted(fnames):
         paths = []
@@ -47,9 +45,9 @@ def make_video_dataset(dir):
             if is_image_file(f):
                 paths.append(os.path.join(root, f))
         if len(paths) > 0:
-            images.append(paths)
-    # Find minimun sequence length and reduce all sequences to that.
-    return images
+            folder = os.path.basename(root)
+            images[folder] = paths
+    return images, fnames[2][0]
 
 def print_args(parser, args):
     message = ''
@@ -84,40 +82,38 @@ def main():
     else:
         print('Converting results in %s to .mp4 videos.' % path)
 
-    image_paths = make_video_dataset(path)
+    image_paths, save_dir = make_images_dict(path)
+    video_name = save_dir.replace('/', '-') + '-' + args.output_mode + '.mp4'
+    save_path = os.path.join(save_dir, video_name)
 
-    for imgs in image_paths:
-        save_path = os.path.join(os.path.dirname(imgs[0]),
-                    os.path.dirname(imgs[0]).replace('/', '-') \
-                    + '-' + args.output_mode + '.mp4')
-        if not os.path.exists(save_path):
-            fake_video = images_to_video(imgs, '/fake_video')
-            print('Processing %d frames...' % fake_video.shape[0])
-            nmfc_video = images_to_video(imgs, '/nmfc_video')
-            rgb_video = images_to_video(imgs, '/rgb_video')
-            assert fake_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
-            assert rgb_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
-            if args.output_mode in ['heatmap', 'all_heatmaps', 'all']:
-                heatmap_video = images_to_video(imgs, '/heatmap')
-                masked_heatmap_video = images_to_video(imgs, '/masked_heatmap')
-                assert heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
-                assert masked_heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
-            if args.output_mode == 'only_fake':
-                video_list = [fake_video]
-            elif args.output_mode == 'source_target':
-                video_list = [rgb_video, fake_video]
-            elif args.output_mode == 'source_nmfc_target':
-                video_list = [rgb_video, nmfc_video, fake_video]
-            elif args.output_mode == 'heatmap':
-                video_list = [rgb_video, fake_video, heatmap_video]
-            elif args.output_mode == 'masked_heatmap':
-                video_list = [rgb_video, fake_video, masked_heatmap_video]
-            elif args.output_mode == 'all_heatmaps':
-                video_list = [rgb_video, fake_video, heatmap_video, masked_heatmap_video]
-            else:
-                video_list = [rgb_video, nmfc_video, fake_video, heatmap_video, masked_heatmap_video]
-            final_video = np.concatenate(video_list, axis=2)
-            write_video_to_file(save_path, final_video)
+    if not os.path.exists(save_path):
+        fake_video = images_to_video(image_paths['fake'])
+        print('Processing %d frames...' % fake_video.shape[0])
+        nmfc_video = images_to_video(image_paths['nmfc'])
+        rgb_video = images_to_video(image_paths['real'])
+        assert fake_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+        assert rgb_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+        if args.output_mode in ['heatmap', 'all_heatmaps', 'all']:
+            heatmap_video = images_to_video(image_paths['heatmap'])
+            masked_heatmap_video = images_to_video(image_paths['masked_heatmap'])
+            assert heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+            assert masked_heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+        if args.output_mode == 'only_fake':
+            video_list = [fake_video]
+        elif args.output_mode == 'source_target':
+            video_list = [rgb_video, fake_video]
+        elif args.output_mode == 'source_nmfc_target':
+            video_list = [rgb_video, nmfc_video, fake_video]
+        elif args.output_mode == 'heatmap':
+            video_list = [rgb_video, fake_video, heatmap_video]
+        elif args.output_mode == 'masked_heatmap':
+            video_list = [rgb_video, fake_video, masked_heatmap_video]
+        elif args.output_mode == 'all_heatmaps':
+            video_list = [rgb_video, fake_video, heatmap_video, masked_heatmap_video]
+        else:
+            video_list = [rgb_video, nmfc_video, fake_video, heatmap_video, masked_heatmap_video]
+        final_video = np.concatenate(video_list, axis=2)
+        write_video_to_file(save_path, final_video)
 
 if __name__=='__main__':
     main()
