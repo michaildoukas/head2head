@@ -84,7 +84,7 @@ for i, data in enumerate(dataset):
     visualizer.save_images(save_dir, visuals, img_path[-1])
 
 if not opt.do_reenactment:
-    # Average Pixel Distance (APD)
-    print('Average pixel distance for sequence %0.2f' % (total_distance/total_pixels))
-    # Masked Average Pixel Distance (MAPD)
-    print('Masked average pixel distance for sequence %0.2f' % (mtotal_distance/mtotal_pixels))
+    # Average Pixel Distance (APD-L2)
+    print('Average pixel (L2) distance for sequence (APD-L2): %0.2f' % (total_distance/total_pixels))
+    # Masked Average Pixel Distance (MAPD-L2)
+    print('Masked average pixel (L2) distance for sequence (MAPD-L2): %0.2f' % (mtotal_distance/mtotal_pixels))
