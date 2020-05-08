@@ -2,9 +2,9 @@ import cv2
 import os
 import numpy as np
 import argparse
-import sys
 import collections
 import torch
+import itertools
 from tqdm import tqdm
 
 from reconstruction import NMFCRenderer
@@ -49,12 +49,35 @@ def print_args(parser, args):
     message += '-------------------------------------------'
     print(message)
 
+def l1_dist(v1, v2):
+    return np.abs(v1 - v2).sum()
+
+def get_within_distances(lst):
+    pairs = itertools.combinations(lst, 2)
+    max = 0
+    min = np.float('inf')
+    avg = []
+    for pair in pairs:
+        dst = l1_dist(pair[0], pair[1])
+        if dst < min:
+            min = dst
+        if dst > max:
+            max = dst
+        avg.append(dst)
+    avg = np.mean(avg)
+    return min, max, avg
+
+def compute_distance_of_average_identities(ident_list1, ident_list2):
+    avg_ident1, avg_ident2 = np.mean(ident_list1, axis=0), np.mean(ident_list2, axis=0)
+    return l1_dist(avg_ident1, avg_ident2)
+
 def compute_average_expesion_distance(expr_list1, expr_list2):
-    return np.mean([np.abs(expr1 - expr2).sum() \
+    return np.mean([l1_dist(expr1, expr2) \
             for expr1, expr2 in zip(expr_list1, expr_list2)])
 
 def main():
-    print('--- Compute average L1 distance between expression coeffs --- \n')
+    print('Compute L1 distance between average identity coeffs (DAI-L1)\n')
+    print('Compute average L1 distance between expression coeffs (AED-L1)\n')
     parser = argparse.ArgumentParser()
     parser.add_argument('--results_dir', type=str, default='results/head2head_finetuned_elizabeth/test_videos_latest/elizabeth/',
                         help='Path to the results directory.')
@@ -81,21 +104,33 @@ def main():
     # Initialize the NMFC renderer.
     renderer = NMFCRenderer(args)
     # Iterate through the images_dict
+    identities_dict = {}
     expressions_dict = {}
     for name, image_pths in images_dict.items():
         if paths_exist(image_pths):
             success, reconstruction_output = renderer.reconstruct(image_pths)
             if success:
+                identities_dict[name] = reconstruction_output[1]
                 expressions_dict[name] = reconstruction_output[2]
             else:
                 print('Reconstruction on %s failed.' % name)
                 break
     # If the two expression sequences have been computed, find average L1 dist.
-    if len(expressions_dict.keys()) == 2:
-        dst = compute_average_expesion_distance(expressions_dict['real'],
-                                                expressions_dict['fake'])
+    if len(identities_dict.keys()) == 2:
+        # Identity
+        dai_L1 = compute_distance_of_average_identities(identities_dict['real'],
+                                                        identities_dict['fake'])
+        # Distance Between Average Identities (DAI-L1)
+        print('(L1) distance between average identities from real and fake sequences (DAI-L1): %0.4f' % (dai_L1))
+        #dsts_real = get_within_distances(identities_dict['real'])
+        #print('Within real sequence min %0.4f, max %0.4f, mean %0.4f' % dsts_real)
+        #dsts_fake = get_within_distances(identities_dict['fake'])
+        #print('Within fake sequence min %0.4f, max %0.4f, mean %0.4f' % dsts_fake)
+        # Expression
+        aed_L1 = compute_average_expesion_distance(expressions_dict['real'],
+                                                   expressions_dict['fake'])
         # Average Expression Distance (AED-L1)
-        print('Average expression (L1) distance between real and fake sequences (AED-L1): %0.4f' % (dst))
+        print('Average expression (L1) distance between real and fake sequences (AED-L1): %0.4f' % (aed_L1))
 
     # Clean
     renderer.clear()
