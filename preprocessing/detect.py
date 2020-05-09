@@ -71,6 +71,7 @@ def get_video_paths_dict(dir):
                     # If part of video
                     if '_part_' in video_name:
                         video_name = video_name.split('_part_')[0]
+                    video_name = video_name.replace('_', '')
                     if video_name not in video_files:
                         video_files[video_name] = [path]
                     else:

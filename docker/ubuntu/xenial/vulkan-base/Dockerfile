@@ -292,6 +292,6 @@ RUN $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --set auto_a
     && $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add channels anaconda \
     && $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda install --file /tmp/conda-env.txt
 
-RUN pip install insightface mxnet-cu92mkl facenet-pytorch --no-warn-script-location
+RUN pip install insightface mxnet-cu92 facenet-pytorch --no-warn-script-location
 
 RUN echo 'conda activate base \n' >> $HOME/.bashrc

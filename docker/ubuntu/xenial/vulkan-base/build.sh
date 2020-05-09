@@ -1,6 +1,5 @@
 #!/bin/sh
 
-BUILD_DATE=$(date -u +'%Y-%m-%d-%H:%M:%S')
 ORG='head2head'
 IMAGE='vulkan-base'
 IMAGE_FEATURE='cudagl'
@@ -26,7 +25,6 @@ tar -czh . | docker build - \
   --build-arg REPOSITORY=nvidia/cudagl \
   --build-arg TAG="$CUDA_MAJOR_VERSION-devel-ubuntu16.04" \
   --build-arg BUILD_VERSION=$BUILD_VERSION \
-  --build-arg BUILD_DATE=$BUILD_DATE \
   --build-arg CUDA_MAJOR_VERSION=$CUDA_MAJOR_VERSION \
   --build-arg CUDNN_VERSION=$CUDNN_VERSION \
   --build-arg CONDA_PYTHON_VERSION=$CONDA_PYTHON_VERSION \
