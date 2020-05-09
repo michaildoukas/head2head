@@ -165,27 +165,6 @@ ARG CMAKE_VERSION=3.14
 RUN wget -qO- "https://cmake.org/files/v$CMAKE_VERSION/cmake-$CMAKE_VERSION.0-Linux-x86_64.tar.gz" | \
   tar --strip-components=1 -xz -C /usr/local
 
-# install conda
-ARG CONDA_PYTHON_VERSION
-ARG CONDA_BASE_PACKAGE
-ARG CONDA_VERSION
-ENV CONDA_PYTHON_VERSION $CONDA_PYTHON_VERSION
-ENV CONDA_BASE_PACKAGE $CONDA_BASE_PACKAGE
-ENV CONDA_VERSION $CONDA_VERSION
-RUN CONDA_BASE_PACKAGE_NAME=`echo $CONDA_BASE_PACKAGE | sed -r 's/\<./\U&/g'` \
-    && OS=`uname -s` \
-    && ARCH=`uname -m` \
-    && CONDA_INSTALL_PACKAGE=$CONDA_BASE_PACKAGE_NAME$CONDA_PYTHON_VERSION-$CONDA_VERSION-$OS-$ARCH.sh \
-    && echo "installing $CONDA_INSTALL_PACKAGE" \
-    && if [ $CONDA_BASE_PACKAGE_NAME = 'Anaconda' ]; then \
-         wget -q --show-progress --progress=bar:force:noscroll https://repo.anaconda.com/archive/$CONDA_INSTALL_PACKAGE -O /tmp/$CONDA_BASE_PACKAGE.sh ;\
-       fi \
-    && if [ $CONDA_BASE_PACKAGE_NAME = 'Miniconda' ]; then \
-         wget -q --show-progress --progress=bar:force:noscroll https://repo.continuum.io/miniconda/$CONDA_INSTALL_PACKAGE -O /tmp/$CONDA_BASE_PACKAGE.sh ;\
-       fi \
-    && bash /tmp/$CONDA_BASE_PACKAGE.sh -b -p /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION \
-    && rm /tmp/$CONDA_BASE_PACKAGE.sh
-
 # install vulkan sdk
 ARG BUILD_VERSION
 ARG VULKAN_SDK_VERSION
@@ -242,6 +221,27 @@ USER $USER
 # set the working directory
 WORKDIR $HOME
 
+# install conda
+ARG CONDA_PYTHON_VERSION
+ARG CONDA_BASE_PACKAGE
+ARG CONDA_VERSION
+ENV CONDA_PYTHON_VERSION $CONDA_PYTHON_VERSION
+ENV CONDA_BASE_PACKAGE $CONDA_BASE_PACKAGE
+ENV CONDA_VERSION $CONDA_VERSION
+RUN CONDA_BASE_PACKAGE_NAME=`echo $CONDA_BASE_PACKAGE | sed -r 's/\<./\U&/g'` \
+    && OS=`uname -s` \
+    && ARCH=`uname -m` \
+    && CONDA_INSTALL_PACKAGE=$CONDA_BASE_PACKAGE_NAME$CONDA_PYTHON_VERSION-$CONDA_VERSION-$OS-$ARCH.sh \
+    && echo "installing $CONDA_INSTALL_PACKAGE" \
+    && if [ $CONDA_BASE_PACKAGE_NAME = 'Anaconda' ]; then \
+         wget -q --show-progress --progress=bar:force:noscroll https://repo.anaconda.com/archive/$CONDA_INSTALL_PACKAGE -O /tmp/$CONDA_BASE_PACKAGE.sh ;\
+       fi \
+    && if [ $CONDA_BASE_PACKAGE_NAME = 'Miniconda' ]; then \
+         wget -q --show-progress --progress=bar:force:noscroll https://repo.continuum.io/miniconda/$CONDA_INSTALL_PACKAGE -O /tmp/$CONDA_BASE_PACKAGE.sh ;\
+       fi \
+    && bash /tmp/$CONDA_BASE_PACKAGE.sh -b -p $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION \
+    && rm /tmp/$CONDA_BASE_PACKAGE.sh
+
 # labels
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="edowson/vulkan-base/cudagl:$BUILD_VERSION-$CUDA_MAJOR_VERSION-xenial"
@@ -280,14 +280,18 @@ export LD_LIBRARY_PATH="${VULKAN_SDK}/lib:${CUDA}/lib64:${CUDA}/extras/CUPTI/lib
 export PATH="${HOME}/bin:${VULKAN_SDK}/bin:${CUDA}/bin${PATH:+:${PATH}}"\n' \
     >> $HOME/.bashrc
 
-RUN /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda init bash
+COPY docker/ubuntu/xenial/vulkan-base/libm.so.6 /lib/x86_64-linux-gnu
+COPY conda-env.txt /tmp
+
+RUN $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda init bash
 
 # update .condarc
-RUN    /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --set auto_activate_base false \
-    && /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add envs_dirs ~/.conda/env \
-    && /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add pkgs_dirs ~/.conda/pkgs \
-    && /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add channels anaconda
+RUN $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --set auto_activate_base false \
+    && $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add envs_dirs ~/.conda/env \
+    && $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add pkgs_dirs ~/.conda/pkgs \
+    && $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add channels anaconda \
+    && $HOME/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda install --file /tmp/conda-env.txt
 
-COPY docker/ubuntu/xenial/vulkan-base/libm.so.6 /lib/x86_64-linux-gnu
+RUN pip install insightface mxnet-cu92mkl facenet-pytorch --no-warn-script-location
 
-RUN conda create --name head2head --file conda-env.txt
+RUN echo 'conda activate base \n' >> $HOME/.bashrc

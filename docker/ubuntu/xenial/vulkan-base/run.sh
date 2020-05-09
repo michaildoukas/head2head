@@ -15,7 +15,7 @@ TAG="$BUILD_VERSION-$CUDA_MAJOR_VERSION-$CODE_NAME"
 xhost +local:root
 
 if [ -c /dev/video0 ]; then
-    printf '%s\n' "webcam connected"
+    printf 'Webcam device detected \n'
     docker run -it \
       --runtime=nvidia \
       -v $(pwd):/home/$USER/head2head \
@@ -28,7 +28,7 @@ if [ -c /dev/video0 ]; then
       -e DISPLAY=unix$DISPLAY \
       ${REPOSITORY}:${TAG} bash
 else
-    printf '%s\n' "webcam not connected"
+    printf 'No webcam device detected \n'
     docker run -it \
       --runtime=nvidia \
       -v $(pwd):/home/$USER/head2head \

@@ -205,7 +205,7 @@ def main():
     parser.add_argument('--original_videos_path', type=str, default='videos',
                         help='Path of video data dir.')
     parser.add_argument('--dataset_path', type=str, default='datasets/videos', help='Path to save dataset.')
-    parser.add_argument('--mtcnn_batch_size', default=6, type=int, help='The number of frames for face detection.')
+    parser.add_argument('--mtcnn_batch_size', default=8, type=int, help='The number of frames for face detection.')
     parser.add_argument('--cropped_image_size', default=256, type=int, help='The size of frames after cropping the face.')
     parser.add_argument('--margin', default=100, type=int, help='.')
     parser.add_argument('--None_threshold', default=10, type=int, help='Max number of allowed None bounding boxes in a video.')
