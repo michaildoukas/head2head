@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BUILD_DATE=$(date -u +'%Y-%m-%d-%H:%M:%S')
-ORG='head2headfs'
+ORG='head2head'
 IMAGE='vulkan-base'
 IMAGE_FEATURE='cudagl'
 REPOSITORY="$ORG/$IMAGE/$IMAGE_FEATURE"
@@ -38,4 +38,4 @@ tar -czh . | docker build - \
   --build-arg USER=$USER \
   --build-arg UID=$USER_ID \
   --tag=${REPOSITORY}:${TAG} \
-  --file  ./docker-nvidia-vulkan/ubuntu/xenial/vulkan-base/Dockerfile
+  --file docker/ubuntu/xenial/vulkan-base/Dockerfile

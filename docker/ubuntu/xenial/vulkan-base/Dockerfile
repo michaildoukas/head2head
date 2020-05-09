@@ -14,23 +14,9 @@ ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8 \
     LANGUAGE=C.UTF-8
 
-RUN apt-get update && apt-get install -y rsync htop git openssh-server
-
-RUN apt-get install python3-pip -y
-RUN ln -s /usr/bin/python3 /usr/bin/python
-RUN pip3 install --upgrade pip
-
-#Torch and dependencies:
-#RUN pip install https://download.pytorch.org/whl/cu92/torch-0.4.1-cp35-cp35m-linux_x86_64.whl
-RUN pip install https://download.pytorch.org/whl/cu92/torch-1.2.0%2Bcu92-cp35-cp35m-manylinux1_x86_64.whl
-RUN pip install torchvision==0.2.1 cffi tensorboardX
-RUN pip install tqdm scipy scikit-image colorama==0.3.7
-RUN pip install setproctitle pytz ipython
-
-# other dependencies
-RUN apt-get install libglib2.0-0 libsm6 libxrender1 -y
-RUN pip install dominate requests opencv-python gdown Pillow==6.1 flatbuffers clint
-RUN apt-get install -y ffmpeg vim
+# Install packages (TODO:remove)
+#RUN apt-get update && apt-get install -y rsync htop git openssh-server
+#RUN apt-get update && apt-get install -y software-properties-common
 
 # install packages
 RUN apt-get update \
@@ -140,6 +126,20 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
+# Install python3.7
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get update && apt-get install -y python3.7
+
+# Set python3.7 to default python3
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
+
+# Make python point to python3
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Install pip
+RUN apt-get install python3-pip -y
+RUN pip3 install --upgrade pip
+
 # install cudnn libraries
 ARG CUDA_MAJOR_VERSION
 ARG CUDNN_VERSION
@@ -228,13 +228,13 @@ RUN adduser $USER --uid $UID --disabled-password --gecos "" \
     && echo "$USER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # copy configuration files
-COPY ./docker-nvidia-vulkan/ubuntu/xenial/vulkan-base/config/etc/asound.conf /etc/asound.conf
-COPY ./docker-nvidia-vulkan/ubuntu/xenial/vulkan-base/config/etc/pulse/client.conf /etc/pulse/client.conf
-COPY ./docker-nvidia-vulkan/ubuntu/xenial/vulkan-base/config/etc/resolv.conf /etc/resolv.conf
+COPY docker/ubuntu/xenial/vulkan-base/config/etc/asound.conf /etc/asound.conf
+COPY docker/ubuntu/xenial/vulkan-base/config/etc/pulse/client.conf /etc/pulse/client.conf
+COPY docker/ubuntu/xenial/vulkan-base/config/etc/resolv.conf /etc/resolv.conf
 
 # setup nvidia opengl and vulkan driver icds
-#COPY ./docker-nvidia-vulkan/ubuntu/xenial/vulkan-base/config/vendor/egl_nvidia_icd.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
-COPY ./docker-nvidia-vulkan/ubuntu/xenial/vulkan-base/config/vendor/glx_nvidia_icd.json /usr/share/vulkan/icd.d/nvidia_icd.json
+#COPY docker/ubuntu/xenial/vulkan-base/config/vendor/egl_nvidia_icd.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
+COPY docker/ubuntu/xenial/vulkan-base/config/vendor/glx_nvidia_icd.json /usr/share/vulkan/icd.d/nvidia_icd.json
 
 # switch to non-root user
 USER $USER
@@ -288,8 +288,6 @@ RUN    /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --set auto
     && /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add pkgs_dirs ~/.conda/pkgs \
     && /opt/$CONDA_BASE_PACKAGE$CONDA_PYTHON_VERSION/bin/conda config --add channels anaconda
 
-COPY ./docker-nvidia-vulkan/ubuntu/xenial/vulkan-base/libm.so.6 /lib/x86_64-linux-gnu
+COPY docker/ubuntu/xenial/vulkan-base/libm.so.6 /lib/x86_64-linux-gnu
 
-RUN pip install insightface mxnet-cu92mkl
-
-CMD ["bash"]
+RUN conda create --name head2head --file conda-env.txt
