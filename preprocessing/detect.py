@@ -217,7 +217,7 @@ def main():
     parser.add_argument('--keep_fixed_box', action='store_true', default=True, help='Keep a fixed bounding box throughout the video.')
     parser.add_argument('--train_seq_length', default=50, type=int, help='The number of frames for each training sequence.')
     parser.add_argument('--n_parts_test', default=2, type=int, help='The number of sequences/parts left for test (self-reenactment)')
-    parser.add_argument('--default_split', default='train', type=str, help='The default split for data [train|test]')
+    parser.add_argument('--default_split', default='train', choices=['train', 'test'], type=str, help='The default split for data [train|test]')
 
     args = parser.parse_args()
     print_args(parser, args)

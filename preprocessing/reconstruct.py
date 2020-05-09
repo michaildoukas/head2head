@@ -117,7 +117,7 @@ def print_args(parser, args):
 def main():
     print('---------- 3D face reconstruction --------- \n')
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', type=str, default='datasets/videos', help='Path to the dataset directory.')
+    parser.add_argument('--dataset_path', type=str, default='datasets/videos', help='Path to the dataset directory.')
     parser.add_argument('--gpu_id', type=int, default='0', help='Negative value to use CPU, or greater equal than zero for GPU id.')
     parser.add_argument('--save_cam_params', action='store_true', default=True, help='Save the Scale, Rotation and Translation camera params for each frame.')
     parser.add_argument('--save_id_params', action='store_true', default=True, help='Save the average identity coefficient vector for each video.')
@@ -138,7 +138,7 @@ def main():
     # Print Arguments
     print_args(parser, args)
     # Create the directory of image paths.
-    images_dict = get_image_paths_dict(args.data_path)
+    images_dict = get_image_paths_dict(args.dataset_path)
     n_image_dirs = len(images_dict)
     print('Number of identities for 3D face reconstruction: %d \n' % n_image_dirs)
     # Initialize the NMFC renderer.
