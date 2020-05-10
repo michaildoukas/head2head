@@ -2,7 +2,9 @@
 !/.gitignore
 **/__pycache__/
 checkpoints/
-datasets/
+datasets/head2headDataset/dataset
+datasets/head2headDataset/original_videos
+datasets/videos
 models/flownet2_pytorch/*.tar
 results/
 videos/*.mp4

@@ -34,9 +34,11 @@ def save_image(image_numpy, image_path):
 
 def save_images(images, name, split, start_i, is_last, args):
     if split == 'train' and is_last:
+        # Consider only last part for test frames, if we have multiple .mp4 files (parts).
         n_parts = (len(images) + start_i) // args.train_seq_length
-        assert n_parts - args.n_parts_test > 0, 'Number of test parts is more than available parts.'
-        n_images_train = (n_parts - args.n_parts_test) * args.train_seq_length - start_i
+        n_part_test = int((args.test_seq_ratio * n_parts) // 1)
+        assert n_parts - n_part_test > 0, 'Number of test parts is more than available parts.'
+        n_images_train = (n_parts - n_part_test) * args.train_seq_length - start_i
         n_images_test = len(images) - n_images_train
     elif split == 'train':
         n_images_train = len(images)
@@ -101,24 +103,22 @@ def read_mp4(mp4_path, args):
 
 def check_boxes(boxes, img_size, args):
     # Check if there are None boxes. Fix them if only a few (like 5) are None
-    not_detected_cases = 0
     for i in range(len(boxes)):
         if boxes[i] is None:
-            not_detected_cases += 1
             boxes[i] = next((item for item in boxes[i+1:] if item is not None), boxes[i-1])
-    if boxes[0] is None or not_detected_cases > args.None_threshold:
+    if boxes[0] is None:
         print('Not enough boxes detected in video.')
-        return False, None
+        return False, [None]
     boxes = [box[0] for box in boxes]
     # Smoothen boxes
     old_boxes = np.array(boxes)
     if old_boxes.shape[0] <= args.window_length:
         print('Not enough boxes in video for savgol smoothing.')
-        return False, None
+        return False, [None]
     smooth_boxes = scipy.signal.savgol_filter(old_boxes, args.window_length, args.polyorder, axis=0)
     if np.any(smooth_boxes < 0):
         print('Negative box boundry detected in video.')
-        return False, None
+        return False, [None]
     # Check if detected faces are very far from each other. Check distances between all boxes.
     maxim_dst = 0
     for i in range(len(smooth_boxes)-1):
@@ -128,7 +128,7 @@ def check_boxes(boxes, img_size, args):
                 maxim_dst = dst
     if maxim_dst > args.dst_threshold:
          print('L_inf distance between bounding boxes %.4f larger than threshold' % maxim_dst)
-         return False, None
+         return False, [None]
     if args.keep_fixed_box:
         avg_box = np.median(smooth_boxes, axis=0)
         new_boxes = np.stack([avg_box] * smooth_boxes.shape[0], axis=0)
@@ -203,20 +203,19 @@ def main():
     # Argument Parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu_id', type=str, default='0', help='Negative value to use CPU, or greater equal than zero for GPU id.')
-    parser.add_argument('--original_videos_path', type=str, default='videos',
+    parser.add_argument('--original_videos_path', type=str, default='datasets/head2headDataset/original_videos',
                         help='Path of video data dir.')
-    parser.add_argument('--dataset_path', type=str, default='datasets/videos', help='Path to save dataset.')
+    parser.add_argument('--dataset_path', type=str, default='datasets/head2headDataset/dataset', help='Path to save dataset.')
     parser.add_argument('--mtcnn_batch_size', default=8, type=int, help='The number of frames for face detection.')
     parser.add_argument('--cropped_image_size', default=256, type=int, help='The size of frames after cropping the face.')
     parser.add_argument('--margin', default=100, type=int, help='.')
-    parser.add_argument('--None_threshold', default=10, type=int, help='Max number of allowed None bounding boxes in a video.')
     parser.add_argument('--dst_threshold', default=0.3, type=float, help='Max L_inf distance between any bounding boxes in a video. (normalised by image size: (h+w)/2)')
     parser.add_argument('--window_length', default=99, type=int, help='savgol filter window length.')
     parser.add_argument('--polyorder', default=3, type=int, help='savgol filter polyorder.')
     parser.add_argument('--height_recentre', default=0.0, type=float, help='The amount of re-centring bounding boxes lower on the face.')
     parser.add_argument('--keep_fixed_box', action='store_true', default=True, help='Keep a fixed bounding box throughout the video.')
-    parser.add_argument('--train_seq_length', default=50, type=int, help='The number of frames for each training sequence.')
-    parser.add_argument('--n_parts_test', default=2, type=int, help='The number of sequences/parts left for test (self-reenactment)')
+    parser.add_argument('--train_seq_length', default=50, type=int, help='The number of frames for each training sub-sequence.')
+    parser.add_argument('--test_seq_ratio', default=0.33, type=int, help='The ratio of frames left for test (self-reenactment)')
     parser.add_argument('--default_split', default='train', choices=['train', 'test'], type=str, help='The default split for data [train|test]')
 
     args = parser.parse_args()

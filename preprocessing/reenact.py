@@ -102,19 +102,19 @@ def main():
     print('--------- Create reenactment NMFC --------- \n')
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str,
-                        default='datasets/videos',
+                        default='datasets/head2headDataset/dataset',
                         help='Path to the dataset directory.')
     parser.add_argument('--split_s', type=str,
-                        default='test',
+                        default='train',
                         help='Split were source identity belongs.')
     parser.add_argument('--split_t', type=str,
-                        default='test',
+                        default='train',
                         help='Split were target identity belongs.')
     parser.add_argument('--source_id', type=str,
-                        default='dicaprio',
+                        default='Obama',
                         help='Id/name of the source person.')
     parser.add_argument('--target_id', type=str,
-                        default='trudeau',
+                        default='Trudeau',
                         help='Id/name of the target person.')
     parser.add_argument('--adapt_scale', action='store_true',
                         default=True,

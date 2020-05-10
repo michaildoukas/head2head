@@ -18,7 +18,7 @@ class BaseOptions():
         self.parser.add_argument('--load_pretrain', type=str, default='', help='if specified, load the pretrained model')
         self.parser.add_argument('--resize', action='store_true', default=True, help='Resize the input images to loadSize')
 
-        self.parser.add_argument('--dataroot', type=str, default='datasets/videos')
+        self.parser.add_argument('--dataroot', type=str, default='datasets/head2headDataset/dataset')
         self.parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
         self.parser.add_argument('--loadSize', type=int, default=256, help='scale images to this size')
         self.parser.add_argument('--input_nc', type=int, default=3, help='# of input image channels')
