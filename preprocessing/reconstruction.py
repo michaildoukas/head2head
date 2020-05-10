@@ -197,9 +197,12 @@ class NMFCRenderer:
         hephaestus.setup_model(self.model)
 
     def reconstruct(self, image_pths):
+        n_consecutive_fails_threshold = 5 # hardcoded
         # Values to return
         cam_params, id_params, exp_params, landmarks5 = ([] for i in range(4))
         success = True
+        handler_ret_prev = None
+        n_consecutive_fails = 0
         # Perform 3D face reconstruction for each given frame.
         print('Performing face reconstruction')
         for image_pth in tqdm(image_pths):
@@ -213,15 +216,22 @@ class NMFCRenderer:
             # Check if dense landmarks were found and only one face exists in the image.
             handler_ret = self.handler.get(frame)
             if len(handler_ret) == 2:
+                # Face(s) found in frame.
+                n_consecutive_fails = 0
                 landmarks, lands5 = handler_ret[0], handler_ret[1]
+                if len(landmarks) > 1:
+                    print('More than one faces were found in %s' % image_pth)
+                    landmarks, lands5 = landmarks[0:1], lands5[0:1]
             else:
-                print('Failed to find a face in %s' % image_pth)
-                success = False
-                break
-            if len(landmarks) != 1 or len(lands5) != 1:
-                print('None or more than one faces were found in %s' % image_pth)
-                success = False
-                break
+                # Face not found in frame.
+                n_consecutive_fails += 1
+                print('Failed to find a face in %s (%d times in a row)' % (image_pth, n_consecutive_fails))
+                if handler_ret_prev is None or n_consecutive_fails > n_consecutive_fails_threshold:
+                    success = False
+                    break
+                else:
+                    # Recover using previous landmarks
+                    handler_ret = handler_ret_prev
             # Perform fitting.
             pos_lms = landmarks[0][:-68].astype(np.float32)
             shape = pos_lms.copy() * np.array([1, -1, -1], dtype=np.float32) # landmark mesh is in left-handed system
@@ -232,6 +242,7 @@ class NMFCRenderer:
             id_params.append(coefs[:157])            # Identity coefficients
             exp_params.append(coefs[157:])           # Expression coefficients
             landmarks5.append(lands5[0])             # Five facial landmarks
+            handler_ret_prev = handler_ret
         # Return
         return success, (cam_params, id_params, exp_params, landmarks5)
 
