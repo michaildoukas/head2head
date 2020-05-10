@@ -46,17 +46,18 @@ pip install insightface mxnet-cu92mkl facenet-pytorch
 
 ## head2head Dataset
 
-We have trained and tested head2head on the seven target identities shown below.
+#### Video data visualisation after face detection and cropping
 
-#### Training set identities after face detection and cropping
+We have trained and tested head2head on the seven target identities shown below:
 
 ![](imgs/head2headDataset_identities.gif)
 
-Link to the original videos videos, before ROI extraction: [\[Original videos .zip file\]](https://www.dropbox.com/s/moh71pvtll9n9ye/original_videos.zip?dl=1). The YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
+#### Download head2head Dataset
 
-#### Download the complete head2head Dataset
+- Link to the original videos videos, before ROI extraction: [\[original_videos.zip\]](https://www.dropbox.com/s/moh71pvtll9n9ye/original_videos.zip?dl=1). The YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
+- Link to full dataset, with the extracted ROI frames and 3D reconstruction data (NMFCs, landmarks, expression, identity and camera parameters): [\[dataset.zip\]](https://www.dropbox.com/s/saimhaftz27fjqt/dataset.zip?dl=1)
 
-In order to download the head2head Dataset, with the extracted ROI frames and 3D reconstruction data (NMFCs, landmarks, expression, identity and camera parameters), run:
+Alternatively, you can download the head2head Dataset, running:
 
 ```bash
 python scripts/download/download_dataset.py
