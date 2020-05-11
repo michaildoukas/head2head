@@ -1,10 +1,12 @@
 .*
 !/.gitignore
 **/__pycache__/
+*.tmp
 checkpoints/
 datasets/head2headDataset/dataset
 datasets/head2headDataset/original_videos
 datasets/head2headDataset2/*
+datasets/faceforensicspp*
 models/flownet2_pytorch/*.tar
 results/
 videos/*.mp4

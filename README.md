@@ -52,7 +52,6 @@ Make sure you have downloaded the required models and files for face reconstruct
 python scripts/download_files.py
 ```
 
-
 ## head2head Dataset
 
 #### Video data visualisation after face detection and cropping
@@ -159,3 +158,21 @@ Given a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_n
 ```
 
 ## Real-time source-to-target reenactment
+
+TODO
+
+## Pre-training on FaceForensic++ Dataset
+
+In order to increase the generative performance of head2head in very short target videos, we can pre-train a model on the a multi-person dataset, such as FaceForensic++, and then fine-tune it on a new target video-identity. You can download a processed version of the original 1000 videos of FaceForensic++ with complete NMFC annotations (~35 GBs), with:
+
+```bash
+python scripts/download_dataset.py --dataset faceforensicspp
+```
+Then, train head2head on this multi-person dataset:
+```bash
+./scripts/train/train_faceforensicspp.sh
+```
+Finally, fine-tune on ```<target_name>``` from ```<dataset_name>```:
+```bash
+./scripts/train/finetune_on_target.sh <target_name> <dataset_name>
+```
