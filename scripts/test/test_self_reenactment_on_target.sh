@@ -1,5 +1,5 @@
 target_name=$1
-dataset=$2
+dataset_name=$2
 epoch=latest # hardcoded
 
 python test.py --checkpoints_dir checkpoints/$dataset_name \
