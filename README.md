@@ -9,8 +9,8 @@ cd head2head
 ```
 
 We provide two alternatives for installing head2head required packages:
-- Build a Docker image (recommended, requires sudo privileges)
-- Create a Conda environment (Requires CUDA 9.2 and Vulkan already installed)
+- Build a Docker image (Recommended, requires sudo privileges)
+- Create a Conda environment (Requires python 3.7, CUDA 9.2 and Vulkan already installed)
 
 #### Build a Docker image (option 1):
 Install Docker and its dependencies:
@@ -35,7 +35,7 @@ Create a conda environment, using the provided ```conda-env.txt``` file.
 ```bash
 conda create --name head2head --file conda-env.txt
 ```
-Activate the conda environment.
+Activate the environment.
 ```bash
 conda activate head2head
 ```
