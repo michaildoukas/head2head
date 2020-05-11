@@ -61,7 +61,7 @@ def get_video_paths_dict(dir):
     if os.path.exists(dir) and is_video_file(dir):
         # If path to single .mp4 file was given directly.
         # If '_' in file name remove it.
-        video_files = {os.path.splitext(os.path.basename(dir))[0].replace('_', '') : dir}
+        video_files = {os.path.splitext(os.path.basename(dir))[0].replace('_', '') : [dir]}
     else:
         video_files = {}
         assert os.path.isdir(dir), '%s is not a valid directory' % dir
