@@ -60,7 +60,7 @@ We have trained and tested head2head on the seven target identities shown below:
 Alternatively, you can download head2head Dataset, running:
 
 ```bash
-python scripts/download/download_dataset.py
+python scripts/download_dataset.py
 ```
 
 It will be placed under ```datasets/head2headDataset```.
