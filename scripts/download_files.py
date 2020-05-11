@@ -31,8 +31,9 @@ def main():
                                 len(download_urls)))
             wget.download(url[1], fpath, bar=bar.get_bar)
             print('\n')
-            print('Unzipping file...')
-            unzip_file(fpath, url[0])
+            if fpath.endswith('.zip'):
+                print('Unzipping file...')
+                unzip_file(fpath, url[0])
     print('DONE!')
 
 if __name__ == "__main__":
