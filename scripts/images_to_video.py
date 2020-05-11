@@ -47,7 +47,7 @@ def make_images_dict(dir):
         if len(paths) > 0:
             folder = os.path.basename(root)
             images[folder] = paths
-    return images, fnames[2][0]
+    return images
 
 def print_args(parser, args):
     message = ''
@@ -64,9 +64,8 @@ def print_args(parser, args):
 def main():
     print('---- Create .mp4 video file from images --- \n')
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', type=str,
-                        default='head2head_trudeau',
-                        help='Name of model we used to generate the results.')
+    parser.add_argument('--results_dir', type=str,
+                        help='Path to the directory where generated images are saved.')
     parser.add_argument('--output_mode', type=str,
                         choices=['only_fake', 'source_target',
                                  'source_nmfc_target', 'heatmap',
@@ -76,17 +75,17 @@ def main():
     args = parser.parse_args()
     print_args(parser, args)
 
-    path = os.path.join('results', args.model_name)
-    if not os.path.isdir(path):
+    path = args.results_dir
+    if path is None or not os.path.isdir(path):
         raise ValueError(path + ' path does not exist.')
     else:
-        print('Converting results in %s to .mp4 videos.' % path)
+        print('Converting images in %s to .mp4 video.' % path)
 
-    image_paths, save_dir = make_images_dict(path)
-    video_name = save_dir.replace('/', '-') + '-' + args.output_mode + '.mp4'
-    save_path = os.path.join(save_dir, video_name)
-
+    image_paths = make_images_dict(path)
+    video_name = path.replace('/', '-') + '.mp4'
+    save_path = os.path.join(path, video_name)
     if not os.path.exists(save_path):
+        heatmap_video, masked_heatmap_video = None, None
         fake_video = images_to_video(image_paths['fake'])
         print('Processing %d frames...' % fake_video.shape[0])
         nmfc_video = images_to_video(image_paths['nmfc'])
@@ -94,6 +93,7 @@ def main():
         assert fake_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
         assert rgb_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
         if args.output_mode in ['heatmap', 'all_heatmaps', 'all']:
+            assert 'heatmap' in image_paths and 'masked_heatmap' in image_paths, 'No heatmap files found.'
             heatmap_video = images_to_video(image_paths['heatmap'])
             masked_heatmap_video = images_to_video(image_paths['masked_heatmap'])
             assert heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'

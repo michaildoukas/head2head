@@ -11,22 +11,23 @@ from data.image_folder import make_video_dataset, assert_valid_pairs
 class videoDataset(BaseDataset):
     def initialize(self, opt):
         self.opt = opt
-        self.do_reenactment = opt.do_reenactment if not opt.isTrain else False
-        prefix = 'source_' if self.do_reenactment else ''
+        do_reenactment = opt.do_reenactment if not opt.isTrain else False
+        prefix = 'source_' if do_reenactment else ''
+        source_name = opt.source_name if not opt.isTrain else None
 
         # Get dataset directories.
         self.dir_nmfc_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'nmfcs')
-        self.nmfc_video_paths = make_video_dataset(self.dir_nmfc_video, opt.target_name)
+        self.nmfc_video_paths = make_video_dataset(self.dir_nmfc_video, opt.target_name, source_name)
         self.dir_rgb_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'images')
-        self.rgb_video_paths = make_video_dataset(self.dir_rgb_video, opt.target_name)
+        self.rgb_video_paths = make_video_dataset(self.dir_rgb_video, opt.target_name, source_name)
         assert_valid_pairs(self.nmfc_video_paths, self.rgb_video_paths)
         if not opt.no_eye_gaze:
             self.dir_eye_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'eyes')
-            self.eye_video_paths = make_video_dataset(self.dir_eye_video, opt.target_name)
+            self.eye_video_paths = make_video_dataset(self.dir_eye_video, opt.target_name, source_name)
             assert_valid_pairs(self.eye_video_paths, self.rgb_video_paths)
         if self.opt.finetune_mouth and self.opt.isTrain:
             self.dir_landmark_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'landmarks')
-            self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name)
+            self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name, source_name)
             assert_valid_pairs(self.landmark_video_paths, self.rgb_video_paths)
 
         self.n_of_seqs = len(self.nmfc_video_paths)

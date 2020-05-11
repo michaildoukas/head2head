@@ -17,9 +17,9 @@ def mkdirs(paths):
 def save_results(source_nmfcs, source_images_paths, args):
     assert len(source_nmfcs) == len(source_images_paths), \
             'Rendered NMFC and original source sequence have different lengths.'
-    save_nmfcs_dir = os.path.join(args.dataset_path, args.split_t,
+    save_nmfcs_dir = os.path.join(args.dataset_path, 'test',
                         'source_nmfcs', args.target_id + '_' + args.source_id)
-    save_images_dir = os.path.join(args.dataset_path, args.split_t,
+    save_images_dir = os.path.join(args.dataset_path, 'test',
                         'source_images', args.target_id + '_' + args.source_id)
     mkdirs([save_nmfcs_dir, save_images_dir])
     for i, source_images_path in enumerate(source_images_paths):
@@ -101,11 +101,11 @@ def print_args(parser, args):
 def main():
     print('--------- Create reenactment NMFC --------- \n')
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_path', type=str,
-                        default='datasets/head2headDataset/dataset',
+    parser.add_argument('--dataset_name', type=str,
+                        default='head2headDataset',
                         help='Path to the dataset directory.')
     parser.add_argument('--split_s', type=str,
-                        default='train',
+                        default='test',
                         help='Split were source identity belongs.')
     parser.add_argument('--split_t', type=str,
                         default='train',
@@ -141,6 +141,9 @@ def main():
     else:
         print('GPU device not available. Exit.')
         exit(0)
+
+    args.dataset_path = os.path.join('datasets', args.dataset_name, 'dataset')
+
     # Remove '_' from id names.
     args.source_id = args.source_id.replace('_', '')
     args.target_id = args.target_id.replace('_', '')

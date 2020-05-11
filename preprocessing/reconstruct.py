@@ -117,7 +117,7 @@ def print_args(parser, args):
 def main():
     print('---------- 3D face reconstruction --------- \n')
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_path', type=str, default='datasets/head2headDataset/dataset', help='Path to the dataset directory.')
+    parser.add_argument('--dataset_name', type=str, default='head2headDataset', help='Path to the dataset directory.')
     parser.add_argument('--gpu_id', type=int, default='0', help='Negative value to use CPU, or greater equal than zero for GPU id.')
     parser.add_argument('--save_cam_params', action='store_true', default=True, help='Save the Scale, Rotation and Translation camera params for each frame.')
     parser.add_argument('--save_id_params', action='store_true', default=True, help='Save the average identity coefficient vector for each video.')
@@ -134,6 +134,8 @@ def main():
     else:
         print('GPU device not available. Exit.')
         exit(0)
+
+    args.dataset_path = os.path.join('datasets', args.dataset_name, 'dataset')
 
     # Print Arguments
     print_args(parser, args)

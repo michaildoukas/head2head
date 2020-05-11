@@ -79,7 +79,7 @@ def main():
     print('Compute L1 distance between average identity coeffs (DAI-L1)\n')
     print('Compute average L1 distance between expression coeffs (AED-L1)\n')
     parser = argparse.ArgumentParser()
-    parser.add_argument('--results_dir', type=str, default='results/head2head_finetuned_elizabeth/test_videos_latest/elizabeth/',
+    parser.add_argument('--results_dir', type=str, default='results/head2head_obama/latest_epoch/videos_test/obama',
                         help='Path to the results directory.')
     parser.add_argument('--gpu_id', type=int, default='0', help='Negative value to use CPU, or greater equal than zero for GPU id.')
     args = parser.parse_args()

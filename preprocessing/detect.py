@@ -205,7 +205,7 @@ def main():
     parser.add_argument('--gpu_id', type=str, default='0', help='Negative value to use CPU, or greater equal than zero for GPU id.')
     parser.add_argument('--original_videos_path', type=str, default='datasets/head2headDataset/original_videos',
                         help='Path of video data dir.')
-    parser.add_argument('--dataset_path', type=str, default='datasets/head2headDataset/dataset', help='Path to save dataset.')
+    parser.add_argument('--dataset_name', type=str, default='head2headDataset', help='Path to save dataset.')
     parser.add_argument('--mtcnn_batch_size', default=8, type=int, help='The number of frames for face detection.')
     parser.add_argument('--cropped_image_size', default=256, type=int, help='The size of frames after cropping the face.')
     parser.add_argument('--margin', default=100, type=int, help='.')
@@ -216,7 +216,7 @@ def main():
     parser.add_argument('--keep_fixed_box', action='store_true', default=True, help='Keep a fixed bounding box throughout the video.')
     parser.add_argument('--train_seq_length', default=50, type=int, help='The number of frames for each training sub-sequence.')
     parser.add_argument('--test_seq_ratio', default=0.33, type=int, help='The ratio of frames left for test (self-reenactment)')
-    parser.add_argument('--default_split', default='train', choices=['train', 'test'], type=str, help='The default split for data [train|test]')
+    parser.add_argument('--split', default='train', choices=['train', 'test'], type=str, help='The split for data [train|test]')
 
     args = parser.parse_args()
     print_args(parser, args)
@@ -234,6 +234,8 @@ def main():
         print('GPU device not available. Exit')
         exit(0)
 
+    args.dataset_path = os.path.join('datasets', args.dataset_name, 'dataset')
+
     # Store video paths in dictionary.
     mp4_paths_dict = get_video_paths_dict(args.original_videos_path)
     n_mp4s = len(mp4_paths_dict)
@@ -246,14 +248,14 @@ def main():
     n_completed = 0
     for name, path in mp4_paths_dict.items():
         n_completed += 1
-        if not is_video_path_processed(name, args.default_split, args):
-            success = detect_and_save_faces(detector, name, path, args.default_split, args)
+        if not is_video_path_processed(name, args.split, args):
+            success = detect_and_save_faces(detector, name, path, args.split, args)
             if success:
-                print('(%d/%d) %s (%s file) [SUCCESS]' % (n_completed, n_mp4s, path[0], args.default_split))
+                print('(%d/%d) %s (%s file) [SUCCESS]' % (n_completed, n_mp4s, path[0], args.split))
             else:
-                print('(%d/%d) %s (%s file) [FAILED]' % (n_completed, n_mp4s, path[0], args.default_split))
+                print('(%d/%d) %s (%s file) [FAILED]' % (n_completed, n_mp4s, path[0], args.split))
         else:
-            print('(%d/%d) %s (%s file) already processed!' % (n_completed, n_mp4s, path[0], args.default_split))
+            print('(%d/%d) %s (%s file) already processed!' % (n_completed, n_mp4s, path[0], args.split))
 
 if __name__ == "__main__":
     main()

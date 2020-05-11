@@ -25,8 +25,8 @@ dataset_size = len(data_loader)
 
 print('Generating %d frames' % dataset_size)
 
-suffix = '_reenactment' if opt.do_reenactment else ''
-save_dir = os.path.join(opt.results_dir, opt.name, '%s_%s_%s' % (opt.phase + suffix, os.path.basename(opt.dataroot), opt.which_epoch))
+save_dir = os.path.join(opt.results_dir, opt.name, opt.which_epoch + '_epoch',
+                        os.path.basename(os.path.dirname(opt.dataroot)) + '_' + opt.phase)
 
 total_distance, total_pixels = 0, 0
 mtotal_distance, mtotal_pixels = 0, 0

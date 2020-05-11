@@ -8,4 +8,5 @@ class TestOptions(BaseOptions):
         self.parser.add_argument('--time_fwd_pass', action='store_true', help='Show the forward pass time for synthesizing each frame.')
         self.parser.add_argument('--which_epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
         self.parser.add_argument('--do_reenactment', action='store_true', default=False, help='When set, perform source to target head reenactment and not self-reenactment.')
+        self.parser.add_argument('--source_name', type=str, default=None, help='Name of source person. If None, test on all sources. Used only when do_reenactment is True.')
         self.isTrain = False
