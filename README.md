@@ -141,7 +141,7 @@ In self reenactment, the target person is also used as source. In this way we ha
 The following commands generates a video, using as driving input (source video) the kept out, test frames of ```<target_name>```:
 
 ```bash
-./scripts/train/test_self_reenactment_on_target.sh <target_name> <dataset_name>
+./scripts/test/test_self_reenactment_on_target.sh <target_name> <dataset_name>
 ```
 
 Synthesised videos are saved under the ```./results``` directory.
@@ -152,7 +152,7 @@ For transferring the expressions and head pose from a source person, to a target
 
 Given a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_name>```, head to head reenactment results are generated after running:
 ```bash
-./scripts/train/test_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
+./scripts/test/test_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
 ```
 
 ## Real-time head-to-head reenactment

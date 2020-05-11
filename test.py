@@ -25,8 +25,7 @@ dataset_size = len(data_loader)
 
 print('Generating %d frames' % dataset_size)
 
-save_dir = os.path.join(opt.results_dir, opt.name, opt.which_epoch + '_epoch',
-                        os.path.basename(os.path.dirname(opt.dataroot)) + '_' + opt.phase)
+save_dir = os.path.join(opt.results_dir, opt.name, opt.which_epoch + '_epoch', opt.phase)
 
 total_distance, total_pixels = 0, 0
 mtotal_distance, mtotal_pixels = 0, 0
