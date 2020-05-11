@@ -54,10 +54,10 @@ We have trained and tested head2head on the seven target identities shown below:
 
 #### Download head2head Dataset
 
-- Link to the original videos videos, before ROI extraction: [\[original_videos.zip\]](https://www.dropbox.com/s/moh71pvtll9n9ye/original_videos.zip?dl=1). The YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
+- Link to the seven original video files, before ROI extraction: [\[original_videos.zip\]](https://www.dropbox.com/s/moh71pvtll9n9ye/original_videos.zip?dl=1). The corresponding YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
 - Link to full dataset, with the extracted ROI frames and 3D reconstruction data (NMFCs, landmarks, expression, identity and camera parameters): [\[dataset.zip\]](https://www.dropbox.com/s/saimhaftz27fjqt/dataset.zip?dl=1)
 
-Alternatively, you can download the head2head Dataset, running:
+Alternatively, you can download head2head Dataset, running:
 
 ```bash
 python scripts/download/download_dataset.py
@@ -66,6 +66,9 @@ python scripts/download/download_dataset.py
 It will be placed under ```datasets/head2headDataset```.
 
 #### head2head Dataset structure
+
+We split the original video of each identity into one training and one test sequence. We place about one third of the total number of frames in the test split. In this way, we are able to use these frames as ground truth, when testing the model in a self reenactment scenario.
+
 ```
 head2headDataset ----- original_videos
                    |
@@ -96,9 +99,9 @@ python preprocessing/detect.py --original_videos_path <videos_path> --dataset_na
 
 - ```<videos_path>``` is the path to the original .mp4 file, or a directory of .mp4 files. (default: ```datasets/head2headDataset/original_videos```)
 
-- ```<dataset_name>``` is the name of the dataset. (default: ```head2headDataset```)
+- ```<dataset_name>``` is the name to be given to the dataset. (default: ```head2headDataset```)
 
-- ```<split>``` is the data split to place the file(s). It can be set to ```train``` (in order to use videos-identities as target) or ```test``` (for videos-identities used only as source). (default: ```train```)
+- ```<split>``` is the data split to place the file(s). If set to ```train```, the videos-identities can be used as target, but the last one third of the frames is placed in the test set, enabling self reenactment experiments. When set to ```test```, the videos-identities can be used only as source and no frames are placed in the training set. (default: ```train```)
 
 #### Face reconstruction
 
@@ -114,7 +117,7 @@ To perform 3D facial reconstruction and compute the NMFC images of all videos-id
 python preprocessing/reconstruct.py --dataset_name <dataset_name>
 ```
 
-Please execute the command above each time you use the face detection script to add new identities (source or target) in the ```<dataset_name>``` dataset.
+Please execute the command above each time you use the face detection script to add new identities in the ```<dataset_name>``` dataset.
 
 ## Train a head2head model
 
@@ -134,8 +137,6 @@ where ```<target_name>``` is the name of the target identity, which should have 
 ## Test self reenactment
 
 In self reenactment, the target person is also used as source. In this way we have access to the ground truth video, which provides a means to evaluate the performance of our model.
-
-When adding a target identity to the dataset, during the face detection step, we leave a few frames out of the training set (about one third of target video), in order to use them for testing the model in a self reenactment scenario.
 
 The following commands generates a video, using as driving input (source video) the kept out, test frames of ```<target_name>```:
 
