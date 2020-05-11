@@ -44,6 +44,15 @@ Install facenet-pytorch, insightface and mxnet with pip (inside the environment)
 pip install insightface mxnet-cu92mkl facenet-pytorch
 ```
 
+#### Download essential files
+
+Make sure you have downloaded the required models and files for face reconstruction and FlowNet2 checkpoints, with:
+
+```bash
+python scripts/download_files.py
+```
+
+
 ## head2head Dataset
 
 #### Video data visualisation after face detection and cropping
@@ -105,13 +114,7 @@ python preprocessing/detect.py --original_videos_path <videos_path> --dataset_na
 
 #### Face reconstruction
 
-Make sure you have downloaded the required models and files for 3D facial fitting, with:
-
-```bash
-python scripts/download_preprocessing_files.py
-```
-
-To perform 3D facial reconstruction and compute the NMFC images of all videos-identities in the dataset, please run:
+To perform 3D facial reconstruction and compute the NMFC images of all videos-identities in the dataset, run:
 
 ```bash
 python preprocessing/reconstruct.py --dataset_name <dataset_name>

@@ -17,22 +17,22 @@ def unzip_file(file_name, unzip_path):
     os.remove(file_name)
 
 def main():
-    print('Downloading models and files for preprocessing \n')
+    print('Downloading models and files for face reconstruction and flownet2 \n')
     # Download urls (hardcoded)
     download_urls = \
-        ['https://www.dropbox.com/s/vzr7snb82n42mfw/files.zip?dl=1',
-         'https://www.dropbox.com/s/uzqz2p9fw3ps7pk/models.zip?dl=1']
-    # Save dir (hardcoded)
-    dir = 'preprocessing'
-    for i, path in enumerate(download_urls):
-        fpath = os.path.join(dir, path.split('/')[-1].split('?')[0])
+        [('preprocessing',  'https://www.dropbox.com/s/vzr7snb82n42mfw/files.zip?dl=1'),
+         ('preprocessing', 'https://www.dropbox.com/s/uzqz2p9fw3ps7pk/models.zip?dl=1'),
+         ('models/flownet2_pytorch', 'https://www.dropbox.com/s/ns7i26gpmhtnoxe/FlowNet2_checkpoint.pth_faceflow.tar?dl=1'),
+         ('models/flownet2_pytorch', 'https://www.dropbox.com/s/55uwylzmth795xh/FlowNet2_checkpoint.pth.tar?dl=1')]
+    for i, url in enumerate(download_urls):
+        fpath = os.path.join(dir, url[1].split('/')[-1].split('?')[0])
         if not os.path.exists(fpath):
             bar = MyProgressBar('Downloading file %d/%d' % (i+1,
                                 len(download_urls)))
-            wget.download(path, fpath, bar=bar.get_bar)
+            wget.download(url[1], fpath, bar=bar.get_bar)
             print('\n')
             print('Unzipping file...')
-            unzip_file(fpath, dir)
+            unzip_file(fpath, url[0])
     print('DONE!')
 
 if __name__ == "__main__":
