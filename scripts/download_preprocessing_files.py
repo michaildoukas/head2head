@@ -17,7 +17,7 @@ def unzip_file(file_name, unzip_path):
     os.remove(file_name)
 
 def main():
-    print('Download models and files for preprocessing')
+    print('Downloading models and files for preprocessing \n')
     # Download urls (hardcoded)
     download_urls = \
         ['https://www.dropbox.com/s/vzr7snb82n42mfw/files.zip?dl=1',

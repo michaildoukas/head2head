@@ -17,7 +17,7 @@ def unzip_file(file_name, unzip_path):
     os.remove(file_name)
 
 def main():
-    print('Download complete head2head dataset\n')
+    print('Downloading complete head2head dataset \n')
     # Download paths (hardcoded)
     save_dir = 'datasets/head2headDataset'
     links_list = [('dataset.zip', 'https://www.dropbox.com/s/saimhaftz27fjqt/dataset.zip?dl=1'),
