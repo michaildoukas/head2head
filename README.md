@@ -163,7 +163,7 @@ TODO
 
 ## Pre-training on FaceForensic++ Dataset
 
-In order to increase the generative performance of head2head in very short target videos, we can pre-train a model on the a multi-person dataset, such as FaceForensic++, and then fine-tune it on a new target video-identity. You can download a processed version of the original 1000 videos of FaceForensic++ with complete NMFC annotations (~35 GBs), with:
+In order to increase the generative performance of head2head in very short target videos, we can pre-train a model on the a multi-person dataset, such as FaceForensic++, and then fine-tune it on a new target video-identity. You can download a processed version of the original 1000 videos of FaceForensic++ with complete NMFC annotations (requires ~100 GBs of free disk space), with:
 
 ```bash
 python scripts/download_dataset.py --dataset faceforensicspp
