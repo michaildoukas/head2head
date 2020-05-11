@@ -5,4 +5,4 @@ python train.py --checkpoints_dir checkpoints/$dataset_name \
                 --target_name $target_name \
                 --name head2head_finetuned_$target_name \
                 --dataroot datasets/$dataset_name/dataset \
-                --load_pretrain checkpoints/head2head_all
+                --load_pretrain checkpoints/faceforensicspp/head2head

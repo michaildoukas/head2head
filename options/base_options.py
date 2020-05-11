@@ -34,7 +34,7 @@ class BaseOptions():
         self.parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         self.parser.add_argument('--name', type=str, default='head2head', help='name of the experiment. It decides where to store samples and models')
         self.parser.add_argument('--nThreads', default=2, type=int, help='# threads for loading data')
-        self.parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
+        self.parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints/head2headDataset', help='models are saved here')
         self.parser.add_argument('--norm', type=str, default='instance', help='instance normalization or batch normalization')
         self.parser.add_argument('--serial_batches', action='store_true', help='if true, perform shuffling in path creation, otherwise in the dataloader. Set in case of frequent out of memory exceptions.')
         self.parser.add_argument('--display_winsize', type=int, default=512,  help='display window size')
