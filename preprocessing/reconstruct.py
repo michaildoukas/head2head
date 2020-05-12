@@ -121,7 +121,7 @@ def main():
     parser.add_argument('--gpu_id', type=int, default='0', help='Negative value to use CPU, or greater equal than zero for GPU id.')
     parser.add_argument('--save_cam_params', action='store_true', default=True, help='Save the Scale, Rotation and Translation camera params for each frame.')
     parser.add_argument('--save_id_params', action='store_true', default=True, help='Save the average identity coefficient vector for each video.')
-    parser.add_argument('--save_landmarks5', action='store_true', default=True, help='Save 5 facial landmarks for each frame.')
+    parser.add_argument('--save_landmarks5', action='store_true', help='Save 5 facial landmarks for each frame.')
     parser.add_argument('--save_exp_params', action='store_true', default=True, help='Save the expression coefficients for each frame.')
     args = parser.parse_args()
     # Figure out the device
