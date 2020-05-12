@@ -14,18 +14,28 @@ def mkdirs(paths):
         if not os.path.exists(path):
             os.makedirs(path)
 
-def save_results(source_nmfcs, source_images_paths, args):
-    assert len(source_nmfcs) == len(source_images_paths), \
+def save_results(nmfcs, eye_landmarks, source_images_paths, args):
+    assert len(nmfcs) == len(source_images_paths), \
             'Rendered NMFC and original source sequence have different lengths.'
+    if eye_landmarks is not None:
+        assert len(eye_landmarks) == len(source_images_paths), \
+                'Adapted eye landmark sequence and original source sequence have different lengths.'
     save_nmfcs_dir = os.path.join(args.dataset_path, 'test',
                         'source_nmfcs', args.target_id + '_' + args.source_id)
     save_images_dir = os.path.join(args.dataset_path, 'test',
                         'source_images', args.target_id + '_' + args.source_id)
     mkdirs([save_nmfcs_dir, save_images_dir])
+    if eye_landmarks is not None:
+        # Save them as 68 landmarks, even they are actually only eye landmarks.
+        save_landmarks68_dir = os.path.join(args.dataset_path, 'test',
+                            'source_landmarks68', args.target_id + '_' + args.source_id)
+        mkdirs([save_landmarks68_dir])
     for i, source_images_path in enumerate(source_images_paths):
         frame_name = os.path.basename(source_images_path)
         copyfile(source_images_path, os.path.join(save_images_dir, frame_name))
-        cv2.imwrite(os.path.join(save_nmfcs_dir, frame_name), source_nmfcs[i])
+        cv2.imwrite(os.path.join(save_nmfcs_dir, frame_name), nmfcs[i])
+        if eye_landmarks is not None:
+            np.savetxt(os.path.join(save_landmarks68_dir, os.path.splitext(frame_name)[0] + '.txt'), eye_landmarks[i])
 
 def compute_cam_params(s_cam_params, t_cam_params, args):
     cam_params = s_cam_params
@@ -142,7 +152,7 @@ def adapt_eye_landmarks(eye_landmarks, eye_centres, s_cam_params, cam_params):
         new_eye_landmarks.append(new_each_eye_landmarks)
     ret_eye_landmarks = []
     for left_eye_landmarks, right_eye_landmarks in zip(new_eye_landmarks[0], new_eye_landmarks[1]):
-        ret_eye_landmarks.append(np.concatenate([left_eye_landmarks, right_eye_landmarks], axis=0).astype(np.int8))
+        ret_eye_landmarks.append(np.concatenate([left_eye_landmarks, right_eye_landmarks], axis=0).astype(np.int32))
     return ret_eye_landmarks
 
 def print_args(parser, args):
@@ -227,22 +237,19 @@ def main():
                                   args.split_t, 'misc'), args.target_id)
     # Compute the camera parameters.
     cam_params = compute_cam_params(s_cam_params, t_cam_params, args)
-    source_nmfcs = renderer.computeNMFCs(cam_params, id_params, exp_params)
-    source_images_paths = [os.path.splitext(path.replace('exp_coeffs',
-                           'images'))[0] + '.png' for path in paths]
-    #save_results(source_nmfcs, source_images_paths, args)
-    # Eyes
+    # Create NMFC images
+    nmfcs = renderer.computeNMFCs(cam_params, id_params, exp_params)
+    # Create Eye landmarks
+    eye_landmarks = None
     if not args.no_eye_gaze:
         eye_landmarks = read_eye_landmarks(os.path.join(args.dataset_path,
                                 args.split_s, 'landmarks68'), args.source_id)
-        eye_centres = search_eye_centres(source_nmfcs)
+        eye_centres = search_eye_centres(nmfcs)
         eye_landmarks = adapt_eye_landmarks(eye_landmarks, eye_centres,
                                             s_cam_params, cam_params)
-        for nmfc, eye_landmark in zip(source_nmfcs, eye_landmarks):
-            for land in eye_landmark:
-                nmfc[land[1]-2:land[1]+2, land[0]-2:land[0]+2, :] = np.array([0, 0, 255])
-            cv2.imwrite('image.png', nmfc)
-            break
+    source_images_paths = [os.path.splitext(path.replace('exp_coeffs',
+                           'images'))[0] + '.png' for path in paths]
+    save_results(nmfcs, eye_landmarks, source_images_paths, args)
     # Clean
     renderer.clear()
 
