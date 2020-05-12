@@ -86,6 +86,65 @@ def read_params(params_type, path, speaker_id):
                     params.append((S, R, T))
         return params, txt_files
 
+def read_eye_landmarks(path, speaker_id):
+    txt_files = []
+    eye_landmarks_left = []
+    eye_landmarks_right = []
+    parts = os.listdir(path)
+    base_part = os.path.join(path, speaker_id)
+    for part in sorted(parts):
+        dir = os.path.join(path, part)
+        if base_part in dir:
+            txt_files.extend([os.path.join(dir, txt) \
+                             for txt in sorted(os.listdir(dir))])
+    for f in txt_files:
+        if os.path.exists(f):
+            eye_landmarks_left.append(np.loadtxt(f)[36:42])  # Left eye
+            eye_landmarks_right.append(np.loadtxt(f)[42:48]) # Right eye
+    return [eye_landmarks_left, eye_landmarks_right]
+
+def search_eye_centres(nmfcs):
+    points = [np.array([192, 180, 81]), # Left eye NMFC code
+              np.array([192, 180, 171])] # Right eye NMFC code
+    ret = []
+    for point in points:
+        centres = []
+        for n, nmfc in enumerate(nmfcs):
+            min_dst = 99999999
+            if n == 0:
+                lim_i_l, lim_i_h = 0, nmfc.shape[0]-1
+                lim_j_l, lim_j_h = 0, nmfc.shape[1]-1
+            else:
+                lim_i_l, lim_i_h = prev_arg_min[0]-20, prev_arg_min[0]+20
+                lim_j_l, lim_j_h = prev_arg_min[1]-20, prev_arg_min[1]+20
+            for i in range(lim_i_l, lim_i_h):
+                for j in range(lim_j_l, lim_j_h):
+                    dst = sum(abs(nmfc[i,j,:] - point))
+                    if dst < min_dst:
+                        min_dst = dst
+                        arg_min = np.array([i, j])
+            #print(min_dst)
+            prev_arg_min = arg_min
+            centres.append(np.flip(arg_min)) # flip, since landmarks are width, heigth
+        ret.append(centres)
+    return ret
+
+def adapt_eye_landmarks(eye_landmarks, eye_centres, s_cam_params, cam_params):
+    new_eye_landmarks = []
+    ratios = [cam_param[0] / s_cam_param[0]
+                for s_cam_param, cam_param in zip(s_cam_params, cam_params)]
+    for each_eye_landmarks, each_eye_centres in zip(eye_landmarks, eye_centres):
+        new_each_eye_landmarks = []
+        for each_eye_landmark, each_eye_centre, ratio in zip(each_eye_landmarks, each_eye_centres, ratios):
+            mean = np.mean(each_eye_landmark, axis=0, keepdims=True)
+            new_each_eye_landmark = (each_eye_landmark - mean) * ratio + np.expand_dims(each_eye_centre, axis=0)
+            new_each_eye_landmarks.append(new_each_eye_landmark)
+        new_eye_landmarks.append(new_each_eye_landmarks)
+    ret_eye_landmarks = []
+    for left_eye_landmarks, right_eye_landmarks in zip(new_eye_landmarks[0], new_eye_landmarks[1]):
+        ret_eye_landmarks.append(np.concatenate([left_eye_landmarks, right_eye_landmarks], axis=0).astype(np.int8))
+    return ret_eye_landmarks
+
 def print_args(parser, args):
     message = ''
     message += '----------------- Arguments ---------------\n'
@@ -126,6 +185,8 @@ def main():
                               using statistics from target video.')
     parser.add_argument('--standardize', action='store_true',
                         help='Perform adaptation using std from videos.')
+    parser.add_argument('--no_eye_gaze', action='store_true',
+                        help='.')
     parser.add_argument('--gpu_id', type=int,
                         default='0',
                         help='Negative value to use CPU, or greater equal than \
@@ -169,7 +230,19 @@ def main():
     source_nmfcs = renderer.computeNMFCs(cam_params, id_params, exp_params)
     source_images_paths = [os.path.splitext(path.replace('exp_coeffs',
                            'images'))[0] + '.png' for path in paths]
-    save_results(source_nmfcs, source_images_paths, args)
+    #save_results(source_nmfcs, source_images_paths, args)
+    # Eyes
+    if not args.no_eye_gaze:
+        eye_landmarks = read_eye_landmarks(os.path.join(args.dataset_path,
+                                args.split_s, 'landmarks68'), args.source_id)
+        eye_centres = search_eye_centres(source_nmfcs)
+        eye_landmarks = adapt_eye_landmarks(eye_landmarks, eye_centres,
+                                            s_cam_params, cam_params)
+        for nmfc, eye_landmark in zip(source_nmfcs, eye_landmarks):
+            for land in eye_landmark:
+                nmfc[land[1]-2:land[1]+2, land[0]-2:land[0]+2, :] = np.array([0, 0, 255])
+            cv2.imwrite('image.png', nmfc)
+            break
     # Clean
     renderer.clear()
 
