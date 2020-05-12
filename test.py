@@ -44,7 +44,7 @@ for i, data in enumerate(dataset):
     input_A = nmfc_video
     rgb_video = Variable(data['rgb_video']).view(1, -1, 3, height, width)
     if not opt.no_eye_gaze:
-        eye_gaze_video = Variable(data['eye_gaze_video']).view(1, -1, 3, height, width)
+        eye_gaze_video = Variable(data['eye_video']).view(1, -1, 3, height, width)
         input_A = torch.cat([nmfc_video, eye_gaze_video], dim=2)
     img_path = data['A_paths']
 
