@@ -60,7 +60,7 @@ def get_video_paths_dict(dir):
     # Returns dict: {video_name: path, ...}
     if os.path.exists(dir) and is_video_file(dir):
         # If path to single .mp4 file was given directly.
-        # If '_' in file name remove it.
+        # If '_' in file name remove it, since it causes problems.
         video_files = {os.path.splitext(os.path.basename(dir))[0].replace('_', '') : [dir]}
     else:
         video_files = {}
@@ -70,10 +70,11 @@ def get_video_paths_dict(dir):
                 if is_video_file(fname):
                     path = os.path.join(root, fname)
                     video_name = os.path.splitext(fname)[0]
-                    # If part of video
-                    if '_part_' in video_name:
-                        video_name = video_name.split('_part_')[0]
-                    video_name = video_name.replace('_', '')
+                    # We asume when video is in parts it has the format:
+                    # {name}_{part_number}
+                    if '_' in video_name:
+                        # If part of video.
+                        video_name = video_name.split('_')[0]
                     if video_name not in video_files:
                         video_files[video_name] = [path]
                     else:

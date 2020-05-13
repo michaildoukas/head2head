@@ -8,7 +8,7 @@ git clone https://github.com/michaildoukas/head2head.git
 cd head2head
 ```
 
-We provide two alternatives for installing head2head required packages:
+We provide two alternatives for installing Head2Head required packages:
 - Build a Docker image (Recommended, requires sudo privileges)
 - Create a Conda environment (Requires python 3.7, CUDA 9.2 and Vulkan already installed)
 
@@ -39,33 +39,33 @@ Activate the environment.
 ```bash
 conda activate head2head
 ```
-Install facenet-pytorch, insightface and mxnet with pip (inside the environment):
+Install dlib, facenet-pytorch, insightface and mxnet with pip (inside the environment):
 ```bash
-pip install insightface mxnet-cu92mkl facenet-pytorch
+pip install dlib insightface mxnet-cu92 facenet-pytorch
 ```
 
 #### Download essential files
 
-Make sure you have downloaded the required models and files for face reconstruction and FlowNet2 checkpoints, with:
+Make sure you have downloaded the required models and files for landmark detection, face reconstruction and FlowNet2 checkpoints, with:
 
 ```bash
 python scripts/download_files.py
 ```
 
-## head2head Dataset
+## Head2Head dataset
 
 #### Video data visualisation after face detection and cropping
 
-We have trained and tested head2head on the seven target identities shown below:
+We have trained and tested Head2Head on the seven target identities shown below:
 
 ![](imgs/head2headDataset_identities.gif)
 
-#### Download head2head Dataset
+#### Download Head2Head Dataset
 
 - Link to the seven original video files, before ROI extraction: [\[original_videos.zip\]](https://www.dropbox.com/s/moh71pvtll9n9ye/original_videos.zip?dl=1). The corresponding YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
 - Link to full dataset, with the extracted ROI frames and 3D reconstruction data (NMFCs, landmarks, expression, identity and camera parameters): [\[dataset.zip\]](https://www.dropbox.com/s/saimhaftz27fjqt/dataset.zip?dl=1)
 
-Alternatively, you can download head2head Dataset, running:
+Alternatively, you can download Head2Head dataset, by running:
 
 ```bash
 python scripts/download_dataset.py
@@ -73,7 +73,7 @@ python scripts/download_dataset.py
 
 It will be placed under ```datasets/head2headDataset```.
 
-#### head2head Dataset structure
+#### Head2Head Dataset structure
 
 We split the original video of each identity into one training and one test sequence. We place about one third of the total number of frames in the test split. In this way, we are able to use these frames as ground truth, when testing the model in a self reenactment scenario.
 
@@ -111,7 +111,13 @@ python preprocessing/detect.py --original_videos_path <videos_path> --dataset_na
 
 - ```<split>``` is the data split to place the file(s). If set to ```train```, the videos-identities can be used as target, but the last one third of the frames is placed in the test set, enabling self reenactment experiments. When set to ```test```, the videos-identities can be used only as source and no frames are placed in the training set. (default: ```train```)
 
-#### Face reconstruction
+#### 68 facial landmarks detection
+
+```bash
+python preprocessing/detect_landmarks68.py --dataset_name <dataset_name>
+```
+
+#### 3D face reconstruction
 
 To perform 3D facial reconstruction and compute the NMFC images of all videos-identities in the dataset, run:
 
@@ -119,7 +125,7 @@ To perform 3D facial reconstruction and compute the NMFC images of all videos-id
 python preprocessing/reconstruct.py --dataset_name <dataset_name>
 ```
 
-Please execute the command above each time you use the face detection script to add new identities in the ```<dataset_name>``` dataset.
+Please execute the two commands above (landmark detection and face reconstruction) each time you use the face detection script to add new identities in the ```<dataset_name>``` dataset.
 
 ## Train a head2head model
 
