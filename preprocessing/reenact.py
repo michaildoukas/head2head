@@ -39,7 +39,7 @@ def save_results(nmfcs, eye_landmarks, source_images_paths, args):
 
 def compute_cam_params(s_cam_params, t_cam_params, args):
     cam_params = s_cam_params
-    if args.adapt_scale:
+    if not args.no_scale_or_translation_adaptation:
         mean_S_target = np.mean([params[0] for params in t_cam_params])
         mean_S_source = np.mean([params[0] for params in s_cam_params])
         if args.standardize:
@@ -55,7 +55,7 @@ def compute_cam_params(s_cam_params, t_cam_params, args):
         nT_source = [params[2] / params[0] for params in s_cam_params]
         cam_params = [(s, params[1], s * t) \
                       for s, params, t in zip(S, s_cam_params, nT_source)]
-        if args.adapt_scale_and_translation:
+        if not args.no_translation_adaptation:
             mean_nT_target = np.mean(nT_target, axis=0)
             mean_nT_source = np.mean(nT_source, axis=0)
             if args.standardize:
@@ -185,16 +185,14 @@ def main():
     parser.add_argument('--target_id', type=str,
                         default='Trudeau',
                         help='Id/name of the target person.')
-    parser.add_argument('--adapt_scale', action='store_true',
-                        default=True,
-                        help='Perform scale adaptation using statistics \
-                              from target video.')
-    parser.add_argument('--adapt_scale_and_translation', action='store_true',
-                        default=True,
-                        help='Perform scale and adaptation standardization \
+    parser.add_argument('--no_scale_or_translation_adaptation', action='store_true',
+                        help='Do not perform scale or translation adaptation \
+                              using statistics from target video.')
+    parser.add_argument('--no_translation_adaptation', action='store_true',
+                        help='Do not perform translation adaptation \
                               using statistics from target video.')
     parser.add_argument('--standardize', action='store_true',
-                        help='Perform adaptation using std from videos.')
+                        help='Perform adaptation using also std from videos.')
     parser.add_argument('--no_eye_gaze', action='store_true',
                         help='.')
     parser.add_argument('--gpu_id', type=int,
