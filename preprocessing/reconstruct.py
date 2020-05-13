@@ -37,11 +37,14 @@ def make_dirs(name, image_pths, args):
     return id_coeffs_paths
 
 def remove_images(name, image_pths):
-    # Remove images
+    # Remove images (and landmarks68 if they exist)
     image_dirs_to_remove = set(os.path.dirname(image_pth) for image_pth in image_pths)
     for dir in image_dirs_to_remove:
         if os.path.isdir(dir):
             rmtree(dir)
+        landmarks68_dir = dir.replace('/images/', '/landmarks68/')
+        if os.path.isdir(landmarks68_dir):
+            rmtree(landmarks68_dir)
 
 def save_results(nmfcs, reconstruction_output, name, image_pths, args):
     # Create save directories
