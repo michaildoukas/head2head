@@ -34,11 +34,10 @@ def save_image(image_numpy, image_path):
 
 def save_images(images, name, split, start_i, is_last, args):
     if split == 'train' and is_last:
-        # Consider only last part for test frames, if we have multiple .mp4 files (parts).
-        n_parts = (len(images) + start_i) // args.train_seq_length
-        n_part_test = int((args.test_seq_ratio * n_parts) // 1)
-        assert n_parts - n_part_test > 0, 'Number of test parts is more than available parts.'
-        n_images_train = (n_parts - n_part_test) * args.train_seq_length - start_i
+        # Leave out frames for test.
+        # If we have multiple .mp4 files (parts), consider only last part for test frames.
+        n_parts_train = ((1 - args.test_seq_ratio) * len(images)) // args.train_seq_length
+        n_images_train = n_parts_train * args.train_seq_length
         n_images_test = len(images) - n_images_train
     elif split == 'train':
         n_images_train = len(images)
@@ -50,7 +49,7 @@ def save_images(images, name, split, start_i, is_last, args):
     for i in tqdm(range(len(images))):
         split_i = 'train' if i < n_images_train else 'test'
         n_frame = "{:06d}".format(i + start_i)
-        part = "_{:06d}".format((i + start_i) // args.train_seq_length) if split == 'train' and i < n_images_train else ""
+        part = "_{:06d}".format((i + start_i) // args.train_seq_length) if split == 'train' and split_i == 'train' else ""
         save_dir = os.path.join(args.dataset_path, split_i, 'images', name + part)
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
