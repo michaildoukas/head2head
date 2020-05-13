@@ -5,10 +5,10 @@
 checkpoints/
 datasets/head2headDataset/dataset
 datasets/head2headDataset/original_videos
-datasets/head2headDataset2/*
+datasets/head2headDatasetv2/dataset
+datasets/head2headDatasetv2/original_videos
 datasets/faceforensicspp*
 models/flownet2_pytorch/*.tar
-results/
-videos/*.mp4
 preprocessing/models/
 preprocessing/files/
+results/

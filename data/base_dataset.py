@@ -56,7 +56,7 @@ def get_params(opt, size):
         new_w = w
     return {'new_size': (new_w, new_h), 'ratio':(new_h / h, new_w / w)}
 
-def get_transform(opt, params, method=Image.BICUBIC, normalize=True, toTensor=True):
+def get_transform(opt, params, method=Image.BICUBIC, normalize=True, augment=False, toTensor=True):
     transform_list = []
     ### resize input image
     if opt.resize:
@@ -65,6 +65,10 @@ def get_transform(opt, params, method=Image.BICUBIC, normalize=True, toTensor=Tr
     else:
         transform_list.append(transforms.Lambda(lambda img: __scale(img, params['new_size'], method)))
 
+    if augment:
+        transform_list += [transforms.RandomAffine(degrees=(-5, 5),
+                                                   translate=(0.02, 0.02),
+                                                   scale=(0.98, 1.02))]
     if toTensor:
         transform_list += [transforms.ToTensor()]
     if normalize:

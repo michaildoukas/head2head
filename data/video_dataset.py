@@ -44,7 +44,7 @@ class videoDataset(BaseDataset):
         n_frames_total, start_idx = get_video_parameters(self.opt, self.n_frames_total, nmfc_len, self.frame_idx)
         first_nmfc_image = Image.open(nmfc_video_paths[0]).convert('RGB')
         params = get_params(self.opt, first_nmfc_image.size)
-        transform_scale_nmfc_video = get_transform(self.opt, params, normalize=False) # do not normalize nmfc values
+        transform_scale_nmfc_video = get_transform(self.opt, params, normalize=False, augment=self.opt.isTrain) # do not normalize nmfc but augment.
         transform_scale_rgb_video = get_transform(self.opt, params)
         change_seq = False if self.opt.isTrain else self.change_seq
 
