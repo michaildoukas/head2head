@@ -127,6 +127,11 @@ def search_eye_centres(nmfcs):
             else:
                 lim_i_l, lim_i_h = prev_arg_min[0]-20, prev_arg_min[0]+20
                 lim_j_l, lim_j_h = prev_arg_min[1]-20, prev_arg_min[1]+20
+            # Check bounds
+            lim_i_l = min(max(lim_i_l, 0), nmfc.shape[0]-1)
+            lim_i_h = min(max(lim_i_h, 0), nmfc.shape[0]-1)
+            lim_j_l = min(max(lim_j_l, 0), nmfc.shape[1]-1)
+            lim_j_h = min(max(lim_j_h, 0), nmfc.shape[1]-1)
             for i in range(lim_i_l, lim_i_h):
                 for j in range(lim_j_l, lim_j_h):
                     dst = sum(abs(nmfc[i,j,:] - point))
