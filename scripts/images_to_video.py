@@ -84,46 +84,45 @@ def main():
     image_paths = make_images_dict(path)
     video_name = path.replace('/', '-') + '.mp4'
     save_path = os.path.join(path, video_name)
-    if not os.path.exists(save_path):
-        heatmap_video, masked_heatmap_video = None, None
-        fake_video = images_to_video(image_paths['fake'])
-        print('Processing %d frames...' % fake_video.shape[0])
-        nmfc_video = images_to_video(image_paths['nmfc'])
-        if 'eye_gaze' in image_paths:
-            eye_gaze_video = images_to_video(image_paths['eye_gaze'])
+    heatmap_video, masked_heatmap_video = None, None
+    fake_video = images_to_video(image_paths['fake'])
+    print('Processing %d frames...' % fake_video.shape[0])
+    nmfc_video = images_to_video(image_paths['nmfc'])
+    if 'eye_gaze' in image_paths:
+        eye_gaze_video = images_to_video(image_paths['eye_gaze'])
+    else:
+        eye_gaze_video = None
+    rgb_video = images_to_video(image_paths['real'])
+    assert fake_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+    assert rgb_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+    if args.output_mode in ['heatmap', 'all_heatmaps', 'all']:
+        assert 'heatmap' in image_paths and 'masked_heatmap' in image_paths, 'No heatmap files found.'
+        heatmap_video = images_to_video(image_paths['heatmap'])
+        masked_heatmap_video = images_to_video(image_paths['masked_heatmap'])
+        assert heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+        assert masked_heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
+    if args.output_mode == 'only_fake':
+        video_list = [fake_video]
+    elif args.output_mode == 'source_target':
+        video_list = [rgb_video, fake_video]
+    elif args.output_mode == 'source_nmfc_target':
+        if eye_gaze_video is not None:
+            video_list = [rgb_video, nmfc_video, eye_gaze_video, fake_video]
         else:
-            eye_gaze_video = None
-        rgb_video = images_to_video(image_paths['real'])
-        assert fake_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
-        assert rgb_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
-        if args.output_mode in ['heatmap', 'all_heatmaps', 'all']:
-            assert 'heatmap' in image_paths and 'masked_heatmap' in image_paths, 'No heatmap files found.'
-            heatmap_video = images_to_video(image_paths['heatmap'])
-            masked_heatmap_video = images_to_video(image_paths['masked_heatmap'])
-            assert heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
-            assert masked_heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
-        if args.output_mode == 'only_fake':
-            video_list = [fake_video]
-        elif args.output_mode == 'source_target':
-            video_list = [rgb_video, fake_video]
-        elif args.output_mode == 'source_nmfc_target':
-            if eye_gaze_video is not None:
-                video_list = [rgb_video, nmfc_video, eye_gaze_video, fake_video]
-            else:
-                video_list = [rgb_video, nmfc_video, fake_video]
-        elif args.output_mode == 'heatmap':
-            video_list = [rgb_video, fake_video, heatmap_video]
-        elif args.output_mode == 'masked_heatmap':
-            video_list = [rgb_video, fake_video, masked_heatmap_video]
-        elif args.output_mode == 'all_heatmaps':
-            video_list = [rgb_video, fake_video, heatmap_video, masked_heatmap_video]
+            video_list = [rgb_video, nmfc_video, fake_video]
+    elif args.output_mode == 'heatmap':
+        video_list = [rgb_video, fake_video, heatmap_video]
+    elif args.output_mode == 'masked_heatmap':
+        video_list = [rgb_video, fake_video, masked_heatmap_video]
+    elif args.output_mode == 'all_heatmaps':
+        video_list = [rgb_video, fake_video, heatmap_video, masked_heatmap_video]
+    else:
+        if eye_gaze_video is not None:
+            video_list = [rgb_video, nmfc_video, eye_gaze_video, fake_video, heatmap_video, masked_heatmap_video]
         else:
-            if eye_gaze_video is not None:
-                video_list = [rgb_video, nmfc_video, eye_gaze_video, fake_video, heatmap_video, masked_heatmap_video]
-            else:
-                video_list = [rgb_video, nmfc_video, fake_video, heatmap_video, masked_heatmap_video]
-        final_video = np.concatenate(video_list, axis=2)
-        write_video_to_file(save_path, final_video)
+            video_list = [rgb_video, nmfc_video, fake_video, heatmap_video, masked_heatmap_video]
+    final_video = np.concatenate(video_list, axis=2)
+    write_video_to_file(save_path, final_video)
 
 if __name__=='__main__':
     main()

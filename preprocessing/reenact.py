@@ -144,15 +144,49 @@ def search_eye_centres(nmfcs):
         ret.append(centres)
     return ret
 
-def adapt_eye_landmarks(eye_landmarks, eye_centres, s_cam_params, cam_params):
+def smoothen_eye_landmarks(eye_landmarks):
+    window_size = 3
+    left_p = window_size // 2
+    right_p =  window_size // 2 if window_size % 2 == 1 else window_size // 2 - 1
+    window = np.ones(int(window_size))/float(window_size) # kernel-filter
+    eye_landmarks = np.array(eye_landmarks)
+    # Padding
+    left_padding = np.stack([eye_landmarks[0]] * left_p, axis=0)
+    right_padding = np.stack([eye_landmarks[-1]] * right_p, axis=0)
+    eye_landmarks_padded = np.concatenate([left_padding, eye_landmarks, right_padding])
+    for land in range(eye_landmarks.shape[1]):
+        for coord in range(eye_landmarks.shape[2]):
+            eye_landmarks[:, land, coord] = np.convolve(eye_landmarks_padded[:, land, coord], window, 'valid')
+    return eye_landmarks
+
+def compute_eye_landmarks_ratio(eye_landmarks_source, eye_landmarks_target):
+    dsts = []
+    for eye_landmarks in [eye_landmarks_source, eye_landmarks_target]:
+        each_eye_dsts = []
+        for each_eye_landmarks in eye_landmarks:
+            dst = 0
+            for each_eye_landmark in each_eye_landmarks:
+                eye_width = np.linalg.norm(each_eye_landmark[0,:] - each_eye_landmark[3,:])
+                dst += (abs(each_eye_landmark[1, 1] - each_eye_landmark[4, 1]) + \
+                       abs(each_eye_landmark[2, 1] - each_eye_landmark[5, 1])) #/ eye_width
+            each_eye_dsts.append(dst / len(each_eye_landmarks))
+        dsts.append(each_eye_dsts)
+    left_eye_ratio = dsts[1][0] / dsts[0][0]
+    right_eye_ratio = dsts[1][1] / dsts[0][1]
+    return [left_eye_ratio, right_eye_ratio]
+
+def adapt_eye_landmarks(eye_landmarks, eye_centres, eye_ratios, s_cam_params, cam_params):
     new_eye_landmarks = []
     ratios = [cam_param[0] / s_cam_param[0]
                 for s_cam_param, cam_param in zip(s_cam_params, cam_params)]
-    for each_eye_landmarks, each_eye_centres in zip(eye_landmarks, eye_centres):
+    for each_eye_landmarks, each_eye_centres, each_eye_ratios in zip(eye_landmarks, eye_centres, eye_ratios):
         new_each_eye_landmarks = []
         for each_eye_landmark, each_eye_centre, ratio in zip(each_eye_landmarks, each_eye_centres, ratios):
             mean = np.mean(each_eye_landmark, axis=0, keepdims=True)
-            new_each_eye_landmark = (each_eye_landmark - mean) * ratio + np.expand_dims(each_eye_centre, axis=0)
+            new_each_eye_landmark = (each_eye_landmark - mean) * ratio
+            new_each_eye_landmark[1:3, 1] *= each_eye_ratios / ratio
+            new_each_eye_landmark[4:6, 1] *= each_eye_ratios / ratio
+            new_each_eye_landmark += np.expand_dims(each_eye_centre, axis=0)
             new_each_eye_landmarks.append(new_each_eye_landmark)
         new_eye_landmarks.append(new_each_eye_landmarks)
     ret_eye_landmarks = []
@@ -245,11 +279,16 @@ def main():
     # Create Eye landmarks
     eye_landmarks = None
     if not args.no_eye_gaze:
-        eye_landmarks = read_eye_landmarks(os.path.join(args.dataset_path,
+        eye_landmarks_source = read_eye_landmarks(os.path.join(args.dataset_path,
                                 args.split_s, 'landmarks68'), args.source_id)
+        eye_landmarks_target = read_eye_landmarks(os.path.join(args.dataset_path,
+                                args.split_t, 'landmarks68'), args.target_id)
         eye_centres = search_eye_centres(nmfcs)
-        eye_landmarks = adapt_eye_landmarks(eye_landmarks, eye_centres,
+        eye_ratios = compute_eye_landmarks_ratio(eye_landmarks_source,
+                                                 eye_landmarks_target)
+        eye_landmarks = adapt_eye_landmarks(eye_landmarks_source, eye_centres, eye_ratios,
                                             s_cam_params, cam_params)
+        eye_landmarks = smoothen_eye_landmarks(eye_landmarks)
     source_images_paths = [os.path.splitext(path.replace('exp_coeffs',
                            'images'))[0] + '.png' for path in paths]
     save_results(nmfcs, eye_landmarks, source_images_paths, args)

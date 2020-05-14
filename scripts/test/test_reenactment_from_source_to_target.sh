@@ -20,4 +20,4 @@ python test.py --checkpoints_dir checkpoints/$dataset_name \
 
 results_dir=results/$dataset_name/head2head_${target_name}/${epoch}_epoch/test/${target_name}_${source_name}
 
-python scripts/images_to_video.py --results_dir $results_dir --output_mode source_target
+python scripts/images_to_video.py --results_dir $results_dir --output_mode source_nmfc_target

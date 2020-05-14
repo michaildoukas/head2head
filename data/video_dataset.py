@@ -64,6 +64,7 @@ class videoDataset(BaseDataset):
             if not self.opt.no_eye_gaze:
                 landmark_video_path = landmark_video_paths[start_idx + i]
                 eye_video_i = self.create_eyes_image(landmark_video_path, first_nmfc_image.size,
+                                                     transform_scale_nmfc_video,
                                                      add_noise=self.opt.isTrain)
                 eye_video = eye_video_i if i == 0 else torch.cat([eye_video, eye_video_i], dim=0)
             if self.opt.finetune_mouth and self.opt.isTrain:
@@ -76,7 +77,7 @@ class videoDataset(BaseDataset):
                        'change_seq':change_seq, 'A_paths':A_paths}
         return return_list
 
-    def create_eyes_image(self, A_path, size, add_noise):
+    def create_eyes_image(self, A_path, size, transform_scale, add_noise):
         def func(x, a, b, c):
             return a * x**2 + b * x + c
 
@@ -147,7 +148,8 @@ class videoDataset(BaseDataset):
                         x, y = pts[sub_edge, 0], pts[sub_edge, 1]
                         curve_x, curve_y = interpPoints(x, y)
                         drawEdge(eyes_image, curve_x, curve_y)
-        return torch.from_numpy(np.transpose(eyes_image, (2, 0, 1)).astype(np.float32))
+        eyes_image = transform_scale(Image.fromarray(np.uint8(eyes_image)))
+        return eyes_image
 
     def read_mouth_keypoints(self, A_path):
         keypoints = np.loadtxt(A_path, delimiter=' ')
@@ -156,11 +158,11 @@ class videoDataset(BaseDataset):
         mouth_center = mouth_center.astype(np.int32)
         return torch.tensor(np.expand_dims(mouth_center, axis=0))
 
-    def get_image(self, A_path, transform_scaleA, convert_rgb=True):
+    def get_image(self, A_path, transform_scale, convert_rgb=True):
         A_img = Image.open(A_path)
         if convert_rgb:
             A_img = A_img.convert('RGB')
-        A_scaled = transform_scaleA(A_img)
+        A_scaled = transform_scale(A_img)
         return A_scaled
 
     def __len__(self):
