@@ -42,14 +42,8 @@ def compute_cam_params(s_cam_params, t_cam_params, args):
     if not args.no_scale_or_translation_adaptation:
         mean_S_target = np.mean([params[0] for params in t_cam_params])
         mean_S_source = np.mean([params[0] for params in s_cam_params])
-        if args.standardize:
-            std_S_target = np.std([params[0] for params in t_cam_params])
-            std_S_source = np.std([params[0] for params in s_cam_params])
-            S = [(params[0] - mean_S_source) * std_S_target / std_S_source \
-                 + mean_S_target for params in s_cam_params]
-        else:
-            S = [params[0] - mean_S_source + mean_S_target
-                 for params in s_cam_params]
+        S = [params[0] * (mean_S_target / mean_S_source)
+             for params in s_cam_params]
         # Normalised Translation for source and target.
         nT_target = [params[2] / params[0] for params in t_cam_params]
         nT_source = [params[2] / params[0] for params in s_cam_params]
@@ -145,7 +139,7 @@ def search_eye_centres(nmfcs):
     return ret
 
 def smoothen_eye_landmarks(eye_landmarks):
-    window_size = 3
+    window_size = 5
     left_p = window_size // 2
     right_p =  window_size // 2 if window_size % 2 == 1 else window_size // 2 - 1
     window = np.ones(int(window_size))/float(window_size) # kernel-filter

@@ -34,9 +34,12 @@ class Head2HeadModelD(BaseModel):
         self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm,
                                       opt.num_D, not opt.no_ganFeat, gpu_ids=self.gpu_ids, opt=opt)
 
-        # Mouth discriminator
-        if opt.finetune_mouth:
+        # Mouth, Eyes discriminator
+        if opt.use_mouth_D:
              self.netDm = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm,
+                                            opt.num_D, not opt.no_ganFeat, gpu_ids=self.gpu_ids, opt=opt)
+        if opt.use_eyes_D:
+             self.netDe = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm,
                                             opt.num_D, not opt.no_ganFeat, gpu_ids=self.gpu_ids, opt=opt)
 
         # Dynamics discriminator
@@ -48,8 +51,10 @@ class Head2HeadModelD(BaseModel):
         # load networks
         if (opt.continue_train or opt.load_pretrain):
             self.load_network(self.netD, 'D', opt.which_epoch, opt.load_pretrain)
-            if opt.finetune_mouth:
+            if opt.use_mouth_D:
                 self.load_network(self.netDm, 'Dm', opt.which_epoch, opt.load_pretrain)
+            if opt.use_eyes_D:
+                self.load_network(self.netDe, 'De', opt.which_epoch, opt.load_pretrain)
             for s in range(opt.n_scales_temporal):
                 self.load_network(getattr(self, 'netD_T'+str(s)), 'D_T'+str(s), opt.which_epoch, opt.load_pretrain)
             print('---------- Discriminators loaded -------------')
@@ -67,15 +72,19 @@ class Head2HeadModelD(BaseModel):
 
         self.loss_names = ['G_VGG', 'G_GAN', 'G_GAN_Feat', 'D_real', 'D_fake', 'G_Warp']
         self.loss_names_T = ['G_T_GAN', 'G_T_GAN_Feat', 'D_T_real', 'D_T_fake']
-        if opt.finetune_mouth:
+        if opt.use_mouth_D:
             self.loss_names += ['Gm_GAN', 'Gm_GAN_Feat', 'Dm_real', 'Dm_fake']
+        if opt.use_eyes_D:
+            self.loss_names += ['Ge_GAN', 'Ge_GAN_Feat', 'De_real', 'De_fake']
 
         beta1, beta2 = opt.beta1, 0.999
         lr = opt.lr
         # initialize optimizers
         params = list(self.netD.parameters())
-        if opt.finetune_mouth:
+        if opt.use_mouth_D:
             params += list(self.netDm.parameters())
+        if opt.use_eyes_D:
+            params += list(self.netDe.parameters())
         self.optimizer_D = torch.optim.Adam(params, lr=lr, betas=(beta1, beta2))
 
         for s in range(opt.n_scales_temporal):
@@ -129,7 +138,7 @@ class Head2HeadModelD(BaseModel):
                         self.criterionFeat(pred_fake[i][j], pred_real[i][j].detach()) * self.opt.lambda_feat
         return loss_G_GAN_Feat
 
-    def forward(self, D_T_scale, tensors_list, mouth_centers=None):
+    def forward(self, D_T_scale, tensors_list, mouth_centers=None, eyes_centers=None):
         is_temporal_D = D_T_scale != 0
         lambda_feat = self.opt.lambda_feat
         lambda_warp = self.opt.lambda_warp
@@ -157,33 +166,34 @@ class Head2HeadModelD(BaseModel):
 
             loss_list = [loss_G_VGG, loss_G_GAN, loss_G_GAN_Feat, loss_D_real, loss_D_fake, loss_G_Warp]
 
-            if self.opt.finetune_mouth:
+            if self.opt.use_mouth_D:
                 # Extract mouth region around the center.
-                real_A_mouth = []
-                real_B_mouth = []
-                fake_B_mouth = []
-                for t in range(mouth_centers.shape[0]):
-                    mc = util.fit_mouth_in_frame(mouth_centers[t], self.opt.loadSize, self.opt.mouthSize)
-                    real_A_mouth.append(util.get_mouth(real_A[t], mc, self.opt.mouthSize))
-                    real_B_mouth.append(util.get_mouth(real_B[t], mc, self.opt.mouthSize))
-                    fake_B_mouth.append(util.get_mouth(fake_B[t], mc, self.opt.mouthSize))
-                real_A_mouth = torch.stack(real_A_mouth, dim=0)
-                real_B_mouth = torch.stack(real_B_mouth, dim=0)
-                fake_B_mouth = torch.stack(fake_B_mouth, dim=0)
+                real_A_mouth, real_B_mouth, fake_B_mouth = util.get_ROI([real_A, real_B, fake_B], mouth_centers, self.opt)
                 # Losses for mouth discriminator
                 loss_Dm_real, loss_Dm_fake, loss_Gm_GAN, loss_Gm_GAN_Feat = self.compute_D_losses(self.netDm, real_A_mouth, real_B_mouth, fake_B_mouth)
                 mouth_weight = 1
                 loss_Gm_GAN *= mouth_weight
                 loss_Gm_GAN_Feat *= mouth_weight
                 loss_list += [loss_Gm_GAN, loss_Gm_GAN_Feat, loss_Dm_real, loss_Dm_fake]
+            if self.opt.use_eyes_D:
+                # Extract eyes region around the center.
+                real_A_eyes, real_B_eyes, fake_B_eyes = util.get_ROI([real_A, real_B, fake_B], eyes_centers, self.opt)
+                # Losses for eyes discriminator
+                loss_De_real, loss_De_fake, loss_Ge_GAN, loss_Ge_GAN_Feat = self.compute_D_losses(self.netDe, real_A_eyes, real_B_eyes, fake_B_eyes)
+                eyes_weight = 1
+                loss_Ge_GAN *= eyes_weight
+                loss_Ge_GAN_Feat *= eyes_weight
+                loss_list += [loss_Ge_GAN, loss_Ge_GAN_Feat, loss_De_real, loss_De_fake]
 
             loss_list = [loss.unsqueeze(0) for loss in loss_list]
             return loss_list
 
     def save(self, label):
         self.save_network(self.netD, 'D', label, self.gpu_ids)
-        if self.opt.finetune_mouth:
+        if self.opt.use_mouth_D:
             self.save_network(self.netDm, 'Dm', label, self.gpu_ids)
+        if self.opt.use_eyes_D:
+            self.save_network(self.netDe, 'De', label, self.gpu_ids)
         for s in range(self.opt.n_scales_temporal):
             self.save_network(getattr(self, 'netD_T'+str(s)), 'D_T'+str(s), label, self.gpu_ids)
 

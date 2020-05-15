@@ -22,7 +22,7 @@ class videoDataset(BaseDataset):
         self.dir_rgb_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'images')
         self.rgb_video_paths = make_video_dataset(self.dir_rgb_video, opt.target_name, source_name)
         assert_valid_pairs(self.nmfc_video_paths, self.rgb_video_paths)
-        if not opt.no_eye_gaze or (self.opt.finetune_mouth and self.opt.isTrain):
+        if not opt.no_eye_gaze or (self.opt.use_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
             self.dir_landmark_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'landmarks68')
             self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name, source_name)
             assert_valid_pairs(self.landmark_video_paths, self.rgb_video_paths)
@@ -37,20 +37,21 @@ class videoDataset(BaseDataset):
         nmfc_video_paths = self.nmfc_video_paths[seq_idx]
         nmfc_len = len(nmfc_video_paths)
         rgb_video_paths = self.rgb_video_paths[seq_idx]
-        if not self.opt.no_eye_gaze or (self.opt.finetune_mouth and self.opt.isTrain):
+        if not self.opt.no_eye_gaze or (self.opt.use_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
             landmark_video_paths = self.landmark_video_paths[seq_idx]
 
         # Get parameters and transforms.
         n_frames_total, start_idx = get_video_parameters(self.opt, self.n_frames_total, nmfc_len, self.frame_idx)
         first_nmfc_image = Image.open(nmfc_video_paths[0]).convert('RGB')
         params = get_params(self.opt, first_nmfc_image.size)
-        transform_scale_nmfc_video = get_transform(self.opt, params, normalize=False, augment=self.opt.isTrain) # do not normalize nmfc but augment.
+        transform_scale_nmfc_video = get_transform(self.opt, params, normalize=False,
+            augment=self.opt.augment_input and self.opt.isTrain) # do not normalize nmfc but augment.
         transform_scale_rgb_video = get_transform(self.opt, params)
         change_seq = False if self.opt.isTrain else self.change_seq
 
         # Read data.
         A_paths = []
-        rgb_video = nmfc_video = eye_video = mouth_centers = 0
+        rgb_video = nmfc_video = eye_video = mouth_centers = eyes_centers = 0
         for i in range(n_frames_total):
             # NMFC
             nmfc_video_path = nmfc_video_paths[start_idx + i]
@@ -67,13 +68,17 @@ class videoDataset(BaseDataset):
                                                      transform_scale_nmfc_video,
                                                      add_noise=self.opt.isTrain)
                 eye_video = eye_video_i if i == 0 else torch.cat([eye_video, eye_video_i], dim=0)
-            if self.opt.finetune_mouth and self.opt.isTrain:
+            if self.opt.use_mouth_D and self.opt.isTrain:
                 landmark_video_path = landmark_video_paths[start_idx + i]
-                mouth_centers_i = self.read_mouth_keypoints(landmark_video_path)
+                mouth_centers_i = self.get_mouth_center(landmark_video_path)
                 mouth_centers = mouth_centers_i if i == 0 else torch.cat([mouth_centers, mouth_centers_i], dim=0)
+            if self.opt.use_eyes_D and self.opt.isTrain:
+                landmark_video_path = landmark_video_paths[start_idx + i]
+                eyes_centers_i = self.get_eyes_center(landmark_video_path)
+                eyes_centers = eyes_centers_i if i == 0 else torch.cat([eyes_centers, eyes_centers_i], dim=0)
 
         return_list = {'nmfc_video': nmfc_video, 'rgb_video':rgb_video,
-                       'eye_video':eye_video, 'mouth_centers':mouth_centers,
+                       'eye_video':eye_video, 'mouth_centers':mouth_centers, 'eyes_centers':eyes_centers,
                        'change_seq':change_seq, 'A_paths':A_paths}
         return return_list
 
@@ -151,12 +156,23 @@ class videoDataset(BaseDataset):
         eyes_image = transform_scale(Image.fromarray(np.uint8(eyes_image)))
         return eyes_image
 
-    def read_mouth_keypoints(self, A_path):
+    def get_mouth_center(self, A_path):
         keypoints = np.loadtxt(A_path, delimiter=' ')
         pts = keypoints[48:, :].astype(np.int32) # mouth landmarks from 68 landmarks
         mouth_center = np.median(pts, axis=0)
         mouth_center = mouth_center.astype(np.int32)
         return torch.tensor(np.expand_dims(mouth_center, axis=0))
+
+    def get_eyes_center(self, A_path):
+        keypoints = np.loadtxt(A_path, delimiter=' ')
+        if keypoints.shape[0] == 68:
+            # if all 68 landmarks are available get only 12 for the eyes
+            pts = keypoints[36:48, :].astype(np.int32) # eyes landmarks from 68 landmarks
+        else:
+            pts = keypoints.astype(np.int32)
+        eyes_center = np.median(pts, axis=0)
+        eyes_center = eyes_center.astype(np.int32)
+        return torch.tensor(np.expand_dims(eyes_center, axis=0))
 
     def get_image(self, A_path, transform_scale, convert_rgb=True):
         A_img = Image.open(A_path)

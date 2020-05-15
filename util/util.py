@@ -117,18 +117,33 @@ def mkdir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-def fit_mouth_in_frame(mc, loadSize, mouthSize):
-    mc_w, mc_h = mc[0], mc[1]
-    mc_h = torch.tensor(int(mouthSize/2), dtype=torch.int32).cuda() if mc_h < int(mouthSize/2) else mc_h
-    mc_w = torch.tensor(int(mouthSize/2), dtype=torch.int32).cuda() if mc_w < int(mouthSize/2) else mc_w
-    mc_h = torch.tensor(loadSize - int(mouthSize/2), dtype=torch.int32).cuda() if mc_h > loadSize - int(mouthSize/2) else mc_h
-    mc_w = torch.tensor(loadSize - int(mouthSize/2), dtype=torch.int32).cuda() if mc_w > loadSize - int(mouthSize/2) else mc_w
-    return (mc_w, mc_h)
+def fit_ROI_in_frame(center, opt):
+    center_w, center_h = center[0], center[1]
+    center_h = torch.tensor(opt.ROI_size // 2, dtype=torch.int32).cuda(opt.gpu_ids[0]) if center_h < opt.ROI_size // 2 else center_h
+    center_w = torch.tensor(opt.ROI_size // 2, dtype=torch.int32).cuda(opt.gpu_ids[0]) if center_w < opt.ROI_size // 2 else center_w
+    center_h = torch.tensor(opt.loadSize - opt.ROI_size // 2, dtype=torch.int32).cuda(opt.gpu_ids[0]) if center_h > opt.loadSize - opt.ROI_size // 2 else center_h
+    center_w = torch.tensor(opt.loadSize - opt.ROI_size // 2, dtype=torch.int32).cuda(opt.gpu_ids[0]) if center_w > opt.loadSize - opt.ROI_size // 2 else center_w
+    return (center_w, center_h)
 
-def get_mouth(img, mc, mouthSize):
-    ret = img[..., mc[1]-int(mouthSize/2):mc[1]+int(mouthSize/2),
-                   mc[0]-int(mouthSize/2):mc[0]+int(mouthSize/2)]
-    return ret
+def crop_ROI(img, center, ROI_size):
+    return img[..., center[1] - ROI_size // 2:center[1] + ROI_size // 2,
+                    center[0] - ROI_size // 2:center[0] + ROI_size // 2]
+
+def get_ROI(tensors, centers, opt):
+    real_A, real_B, fake_B = tensors
+    # Extract region of interest around the center.
+    real_A_ROI = []
+    real_B_ROI = []
+    fake_B_ROI = []
+    for t in range(centers.shape[0]):
+        center = fit_ROI_in_frame(centers[t], opt)
+        real_A_ROI.append(crop_ROI(real_A[t], center, opt.ROI_size))
+        real_B_ROI.append(crop_ROI(real_B[t], center, opt.ROI_size))
+        fake_B_ROI.append(crop_ROI(fake_B[t], center, opt.ROI_size))
+    real_A_ROI = torch.stack(real_A_ROI, dim=0)
+    real_B_ROI = torch.stack(real_B_ROI, dim=0)
+    fake_B_ROI = torch.stack(fake_B_ROI, dim=0)
+    return real_A_ROI, real_B_ROI, fake_B_ROI
 
 def draw_str(image, target, s):
     # Draw string for visualisation.
