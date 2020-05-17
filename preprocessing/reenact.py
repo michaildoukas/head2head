@@ -26,16 +26,16 @@ def save_results(nmfcs, eye_landmarks, source_images_paths, args):
                         'source_images', args.target_id + '_' + args.source_id)
     mkdirs([save_nmfcs_dir, save_images_dir])
     if eye_landmarks is not None:
-        # Save them as 68 landmarks, even they are actually only eye landmarks.
-        save_landmarks68_dir = os.path.join(args.dataset_path, 'test',
-                            'source_landmarks68', args.target_id + '_' + args.source_id)
-        mkdirs([save_landmarks68_dir])
+        # Save them as 70 landmarks, even they are actually only eye landmarks.
+        save_landmarks70_dir = os.path.join(args.dataset_path, 'test',
+                            'source_landmarks70', args.target_id + '_' + args.source_id)
+        mkdirs([save_landmarks70_dir])
     for i, source_images_path in enumerate(source_images_paths):
         frame_name = os.path.basename(source_images_path)
         copyfile(source_images_path, os.path.join(save_images_dir, frame_name))
         cv2.imwrite(os.path.join(save_nmfcs_dir, frame_name), nmfcs[i])
         if eye_landmarks is not None:
-            np.savetxt(os.path.join(save_landmarks68_dir, os.path.splitext(frame_name)[0] + '.txt'), eye_landmarks[i])
+            np.savetxt(os.path.join(save_landmarks70_dir, os.path.splitext(frame_name)[0] + '.txt'), eye_landmarks[i])
 
 def compute_cam_params(s_cam_params, t_cam_params, args):
     cam_params = s_cam_params
@@ -103,8 +103,10 @@ def read_eye_landmarks(path, speaker_id):
                              for txt in sorted(os.listdir(dir))])
     for f in txt_files:
         if os.path.exists(f):
-            eye_landmarks_left.append(np.loadtxt(f)[36:42])  # Left eye
-            eye_landmarks_right.append(np.loadtxt(f)[42:48]) # Right eye
+            left = np.concatenate([np.loadtxt(f)[36:42], np.loadtxt(f)[68:69]], axis=0)
+            right = np.concatenate([np.loadtxt(f)[42:48], np.loadtxt(f)[69:70]], axis=0)
+            eye_landmarks_left.append(left)  # Left eye
+            eye_landmarks_right.append(right) # Right eye
     return [eye_landmarks_left, eye_landmarks_right]
 
 def search_eye_centres(nmfcs):
@@ -139,7 +141,7 @@ def search_eye_centres(nmfcs):
     return ret
 
 def smoothen_eye_landmarks(eye_landmarks):
-    window_size = 5
+    window_size = 8
     left_p = window_size // 2
     right_p =  window_size // 2 if window_size % 2 == 1 else window_size // 2 - 1
     window = np.ones(int(window_size))/float(window_size) # kernel-filter
@@ -185,7 +187,8 @@ def adapt_eye_landmarks(eye_landmarks, eye_centres, eye_ratios, s_cam_params, ca
         new_eye_landmarks.append(new_each_eye_landmarks)
     ret_eye_landmarks = []
     for left_eye_landmarks, right_eye_landmarks in zip(new_eye_landmarks[0], new_eye_landmarks[1]):
-        ret_eye_landmarks.append(np.concatenate([left_eye_landmarks, right_eye_landmarks], axis=0).astype(np.int32))
+        ret_eye_landmarks.append(np.concatenate([left_eye_landmarks[0:6], right_eye_landmarks[0:6],
+                                                 left_eye_landmarks[6:7], right_eye_landmarks[6:7]], axis=0).astype(np.int32))
     return ret_eye_landmarks
 
 def print_args(parser, args):
@@ -274,9 +277,9 @@ def main():
     eye_landmarks = None
     if not args.no_eye_gaze:
         eye_landmarks_source = read_eye_landmarks(os.path.join(args.dataset_path,
-                                args.split_s, 'landmarks68'), args.source_id)
+                                args.split_s, 'landmarks70'), args.source_id)
         eye_landmarks_target = read_eye_landmarks(os.path.join(args.dataset_path,
-                                args.split_t, 'landmarks68'), args.target_id)
+                                args.split_t, 'landmarks70'), args.target_id)
         eye_centres = search_eye_centres(nmfcs)
         eye_ratios = compute_eye_landmarks_ratio(eye_landmarks_source,
                                                  eye_landmarks_target)

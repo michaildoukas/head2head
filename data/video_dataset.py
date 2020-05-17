@@ -23,7 +23,7 @@ class videoDataset(BaseDataset):
         self.rgb_video_paths = make_video_dataset(self.dir_rgb_video, opt.target_name, source_name)
         assert_valid_pairs(self.nmfc_video_paths, self.rgb_video_paths)
         if not opt.no_eye_gaze or (self.opt.use_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
-            self.dir_landmark_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'landmarks68')
+            self.dir_landmark_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'landmarks70')
             self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name, source_name)
             assert_valid_pairs(self.landmark_video_paths, self.rgb_video_paths)
 
@@ -45,7 +45,8 @@ class videoDataset(BaseDataset):
         first_nmfc_image = Image.open(nmfc_video_paths[0]).convert('RGB')
         params = get_params(self.opt, first_nmfc_image.size)
         transform_scale_nmfc_video = get_transform(self.opt, params, normalize=False,
-            augment=self.opt.augment_input and self.opt.isTrain) # do not normalize nmfc but augment.
+            augment=not self.opt.no_augment_input and self.opt.isTrain) # do not normalize nmfc but augment.
+        transform_scale_eye_gaze_video = get_transform(self.opt, params, normalize=False) # do not normalize eye_gaze.
         transform_scale_rgb_video = get_transform(self.opt, params)
         change_seq = False if self.opt.isTrain else self.change_seq
 
@@ -65,7 +66,7 @@ class videoDataset(BaseDataset):
             if not self.opt.no_eye_gaze:
                 landmark_video_path = landmark_video_paths[start_idx + i]
                 eye_video_i = self.create_eyes_image(landmark_video_path, first_nmfc_image.size,
-                                                     transform_scale_nmfc_video,
+                                                     transform_scale_eye_gaze_video,
                                                      add_noise=self.opt.isTrain)
                 eye_video = eye_video_i if i == 0 else torch.cat([eye_video, eye_video_i], dim=0)
             if self.opt.use_mouth_D and self.opt.isTrain:
@@ -91,14 +92,26 @@ class videoDataset(BaseDataset):
 
         def setColor(im, yy, xx, color):
             if len(im.shape) == 3:
-                if (im[yy, xx] == 0).all():
-                    im[yy, xx, 0], im[yy, xx, 1], im[yy, xx, 2] = color[0], color[1], color[2]
-                else:
-                    im[yy, xx, 0] = ((im[yy, xx, 0].astype(float) + color[0]) / 2).astype(np.uint8)
-                    im[yy, xx, 1] = ((im[yy, xx, 1].astype(float) + color[1]) / 2).astype(np.uint8)
-                    im[yy, xx, 2] = ((im[yy, xx, 2].astype(float) + color[2]) / 2).astype(np.uint8)
+                im[yy, xx, 0], im[yy, xx, 1], im[yy, xx, 2] = color[0], color[1], color[2]
+                #if (im[yy, xx] == 0).all():
+                #    im[yy, xx, 0], im[yy, xx, 1], im[yy, xx, 2] = color[0], color[1], color[2]
+                #else:
+                #    im[yy, xx, 0] = ((im[yy, xx, 0].astype(float) + color[0]) / 2).astype(np.uint8)
+                #    im[yy, xx, 1] = ((im[yy, xx, 1].astype(float) + color[1]) / 2).astype(np.uint8)
+                #    im[yy, xx, 2] = ((im[yy, xx, 2].astype(float) + color[2]) / 2).astype(np.uint8)
             else:
                 im[yy, xx] = color[0]
+
+        def drawCircle(im, x, y, rad, color=(255,0,0)):
+            if x is not None and x.size:
+                h, w = im.shape[0], im.shape[1]
+                # edge
+                for i in range(-rad, rad):
+                    for j in range(-rad, rad):
+                        yy = np.maximum(0, np.minimum(h-1, y+i))
+                        xx = np.maximum(0, np.minimum(w-1, x+j))
+                        if np.linalg.norm(np.array([i, j])) < rad:
+                            setColor(im, yy, xx, color)
 
         def drawEdge(im, x, y, bw=1, color=(255,255,255)):
             if x is not None and x.size:
@@ -135,14 +148,22 @@ class videoDataset(BaseDataset):
         w, h = size
         eyes_image = np.zeros((h, w, 3), np.int32)
         keypoints = np.loadtxt(A_path, delimiter=' ')
-        if keypoints.shape[0] == 68:
-            # if all 68 landmarks are available get only 12 for the eyes
-            pts = keypoints[36:48, :].astype(np.int32) # eyes landmarks from 68 landmarks
+        if keypoints.shape[0] == 70:
+            # if all 70 landmarks are available get only 14 for the eyes
+            pts0 = keypoints[36:48, :].astype(np.int32) # eyes landmarks from 70 landmarks
+            pts1 = keypoints[68:70, :].astype(np.int32) # eyes landmarks from 70 landmarks
+            pts = np.concatenate([pts0, pts1], axis=0)
         else:
             pts = keypoints.astype(np.int32)
         if add_noise:
-            # add noise to keypoints
-            pts += np.random.randn(12,2).astype(np.int32)
+            # add noise to eyes distance (x dimension)
+            d_noise = 2 * np.random.randn(2).astype(np.int32)
+            pts[0:6, 0] += d_noise[0]
+            pts[12, 0] += d_noise[0]
+            pts[6:12, 0] -= d_noise[1]
+            pts[13, 0] -= d_noise[1]
+
+        # Draw
         face_list = [ [[0,1,2,3], [3,4,5,0]], # left eye
                       [[6,7,8,9], [9,10,11,6]], # right eye
                      ]
@@ -153,21 +174,25 @@ class videoDataset(BaseDataset):
                         x, y = pts[sub_edge, 0], pts[sub_edge, 1]
                         curve_x, curve_y = interpPoints(x, y)
                         drawEdge(eyes_image, curve_x, curve_y)
+        radius_left = (np.linalg.norm(pts[1]-pts[4]) + np.linalg.norm(pts[2]-pts[5])) / 4
+        radius_right = (np.linalg.norm(pts[7]-pts[10]) + np.linalg.norm(pts[8]-pts[11])) / 4
+        drawCircle(eyes_image, pts[12, 0], pts[12, 1], int(radius_left))
+        drawCircle(eyes_image, pts[13, 0], pts[13, 1], int(radius_right))
         eyes_image = transform_scale(Image.fromarray(np.uint8(eyes_image)))
         return eyes_image
 
     def get_mouth_center(self, A_path):
         keypoints = np.loadtxt(A_path, delimiter=' ')
-        pts = keypoints[48:, :].astype(np.int32) # mouth landmarks from 68 landmarks
+        pts = keypoints[48:, :].astype(np.int32) # mouth landmarks from 70 landmarks
         mouth_center = np.median(pts, axis=0)
         mouth_center = mouth_center.astype(np.int32)
         return torch.tensor(np.expand_dims(mouth_center, axis=0))
 
     def get_eyes_center(self, A_path):
         keypoints = np.loadtxt(A_path, delimiter=' ')
-        if keypoints.shape[0] == 68:
-            # if all 68 landmarks are available get only 12 for the eyes
-            pts = keypoints[36:48, :].astype(np.int32) # eyes landmarks from 68 landmarks
+        if keypoints.shape[0] == 70:
+            # if all 70 landmarks are available get only 12 for the eyes
+            pts = keypoints[36:48, :].astype(np.int32) # eyes landmarks from 70 landmarks
         else:
             pts = keypoints.astype(np.int32)
         eyes_center = np.median(pts, axis=0)
