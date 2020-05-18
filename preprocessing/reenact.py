@@ -141,7 +141,7 @@ def search_eye_centres(nmfcs):
     return ret
 
 def smoothen_eye_landmarks(eye_landmarks):
-    window_size = 8
+    window_size = 3
     left_p = window_size // 2
     right_p =  window_size // 2 if window_size % 2 == 1 else window_size // 2 - 1
     window = np.ones(int(window_size))/float(window_size) # kernel-filter

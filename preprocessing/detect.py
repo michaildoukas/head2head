@@ -36,8 +36,12 @@ def save_images(images, name, split, start_i, is_last, args):
     if split == 'train' and is_last:
         # Leave out frames for test.
         # If we have multiple .mp4 files (parts), consider only last part for test frames.
-        n_parts_train = ((1 - args.test_seq_ratio) * len(images)) // args.train_seq_length
-        n_images_train = n_parts_train * args.train_seq_length
+        n_images_test = args.test_seq_ratio * len(images)
+        n_images_train = len(images) - n_images_test
+        total_images_train = start_i + n_images_train
+        total_parts_train = total_images_train // args.train_seq_length
+        total_images_train = total_parts_train * args.train_seq_length
+        n_images_train = total_images_train - start_i
         n_images_test = len(images) - n_images_train
     elif split == 'train':
         n_images_train = len(images)
@@ -184,6 +188,8 @@ def detect_and_save_faces(detector, name, mp4_paths, split, args):
         if stat:
             save_images(tensor2npimage(face_images), name, split, start_i, is_last, args)
             start_i += len(images)
+        else:
+            return False
     return stat
 
 def print_args(parser, args):
