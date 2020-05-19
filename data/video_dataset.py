@@ -155,17 +155,26 @@ class videoDataset(BaseDataset):
             pts = np.concatenate([pts0, pts1], axis=0)
         else:
             pts = keypoints.astype(np.int32)
+        left_eye_pts = np.concatenate([pts[0:6, :], pts[12:13, :]], axis=0)
+        right_eye_pts = np.concatenate([pts[6:12, :], pts[13:14, :]], axis=0)
+
         if add_noise:
+            scale_noise = 2 * np.random.randn(1)
+            scale = 1 + scale_noise[0] / 100
+            left_eye_mean = np.mean(left_eye_pts, axis=0, keepdims=True)
+            right_eye_mean = np.mean(right_eye_pts, axis=0, keepdims=True)
+            left_eye_pts = (left_eye_pts - left_eye_mean) * scale + left_eye_mean
+            right_eye_pts = (right_eye_pts - right_eye_mean) * scale + right_eye_mean
             # add noise to eyes distance (x dimension)
-            d_noise = 2 * np.random.randn(2).astype(np.int32)
-            pts[0:6, 0] += d_noise[0]
-            pts[12, 0] += d_noise[0]
-            pts[6:12, 0] -= d_noise[1]
-            pts[13, 0] -= d_noise[1]
+            d_noise = 2 * np.random.randn(2)
+            left_eye_pts += d_noise[0]
+            right_eye_pts -= d_noise[1]
+
+        pts = np.concatenate([left_eye_pts, right_eye_pts], axis=0).astype(np.int32)
 
         # Draw
         face_list = [ [[0,1,2,3], [3,4,5,0]], # left eye
-                      [[6,7,8,9], [9,10,11,6]], # right eye
+                      [[7,8,9,10], [10,11,12,7]], # right eye
                      ]
         for edge_list in face_list:
                 for edge in edge_list:
@@ -175,8 +184,8 @@ class videoDataset(BaseDataset):
                         curve_x, curve_y = interpPoints(x, y)
                         drawEdge(eyes_image, curve_x, curve_y)
         radius_left = (np.linalg.norm(pts[1]-pts[4]) + np.linalg.norm(pts[2]-pts[5])) / 4
-        radius_right = (np.linalg.norm(pts[7]-pts[10]) + np.linalg.norm(pts[8]-pts[11])) / 4
-        drawCircle(eyes_image, pts[12, 0], pts[12, 1], int(radius_left))
+        radius_right = (np.linalg.norm(pts[8]-pts[11]) + np.linalg.norm(pts[9]-pts[12])) / 4
+        drawCircle(eyes_image, pts[6, 0], pts[6, 1], int(radius_left))
         drawCircle(eyes_image, pts[13, 0], pts[13, 1], int(radius_right))
         eyes_image = transform_scale(Image.fromarray(np.uint8(eyes_image)))
         return eyes_image

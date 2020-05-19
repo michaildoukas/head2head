@@ -9,7 +9,7 @@ class BaseOptions():
         self.initialized = False
 
     def initialize(self):
-        self.parser.add_argument('--no_augment_input', action='store_true', default=True, help='if true, do not perform input data augmentation.')
+        self.parser.add_argument('--no_augment_input', action='store_true', help='if true, do not perform input data augmentation.')
         self.parser.add_argument('--ROI_size', type=int, default=72, help='spatial dimension size of ROI.')
         self.parser.add_argument('--use_mouth_D', action='store_true', default=True, help='if true, Use mouth discriminator')
         self.parser.add_argument('--use_eyes_D', action='store_true', default=False, help='if true, Use eyes discriminator')

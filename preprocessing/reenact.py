@@ -37,6 +37,22 @@ def save_results(nmfcs, eye_landmarks, source_images_paths, args):
         if eye_landmarks is not None:
             np.savetxt(os.path.join(save_landmarks70_dir, os.path.splitext(frame_name)[0] + '.txt'), eye_landmarks[i])
 
+def smoothen_signal(S, window_size=15):
+    left_p = window_size // 2
+    right_p =  window_size // 2 if window_size % 2 == 1 else window_size // 2 - 1
+    window = np.ones(int(window_size))/float(window_size) # kernel-filter
+    S = np.array(S)
+    # Padding
+    left_padding = np.stack([S[0]] * left_p, axis=0)
+    right_padding = np.stack([S[-1]] * right_p, axis=0)
+    S_padded = np.concatenate([left_padding, S, right_padding])
+    if len(S_padded.shape) == 1:
+        S = np.convolve(S_padded, window, 'valid')
+    else:
+        for coord in range(S_padded.shape[1]):
+            S[:, coord] = np.convolve(S_padded[:, coord], window, 'valid')
+    return S
+
 def compute_cam_params(s_cam_params, t_cam_params, args):
     cam_params = s_cam_params
     if not args.no_scale_or_translation_adaptation:
@@ -44,6 +60,8 @@ def compute_cam_params(s_cam_params, t_cam_params, args):
         mean_S_source = np.mean([params[0] for params in s_cam_params])
         S = [params[0] * (mean_S_target / mean_S_source)
              for params in s_cam_params]
+        # Smoothen scale
+        S = smoothen_signal(S)
         # Normalised Translation for source and target.
         nT_target = [params[2] / params[0] for params in t_cam_params]
         nT_source = [params[2] / params[0] for params in s_cam_params]
@@ -60,6 +78,8 @@ def compute_cam_params(s_cam_params, t_cam_params, args):
             else:
                 nT = [t - mean_nT_source + mean_nT_target
                       for t in nT_source]
+            # Smoothen translation
+            nT = smoothen_signal(nT)
             cam_params = [(s, params[1], s * t) \
                           for s, params, t in zip(S, s_cam_params, nT)]
     return cam_params
@@ -140,8 +160,7 @@ def search_eye_centres(nmfcs):
         ret.append(centres)
     return ret
 
-def smoothen_eye_landmarks(eye_landmarks):
-    window_size = 3
+def smoothen_eye_landmarks(eye_landmarks, window_size=5):
     left_p = window_size // 2
     right_p =  window_size // 2 if window_size % 2 == 1 else window_size // 2 - 1
     window = np.ones(int(window_size))/float(window_size) # kernel-filter

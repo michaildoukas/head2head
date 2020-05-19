@@ -66,7 +66,7 @@ def get_transform(opt, params, method=Image.BICUBIC, normalize=True, augment=Fal
         transform_list.append(transforms.Lambda(lambda img: __scale(img, params['new_size'], method)))
 
     if augment:
-        transform_list += [transforms.RandomAffine(degrees=(-1, 1),
+        transform_list += [transforms.RandomAffine(degrees=(0, 0),
                                                    translate=(0.01, 0.01),
                                                    scale=(0.99, 1.01))]
     if toTensor:
