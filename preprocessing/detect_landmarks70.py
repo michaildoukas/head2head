@@ -92,7 +92,7 @@ def detect_landmarks(img_paths, detector, predictor):
             prev_points = points
             landmarks.append(points)
         else:
-            print('No face detected,  using previous landmarks')
+            print('No face detected, using previous landmarks')
             landmarks.append(prev_points)
     return landmarks
 

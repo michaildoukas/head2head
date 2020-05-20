@@ -200,8 +200,10 @@ class videoDataset(BaseDataset):
     def get_eyes_center(self, A_path):
         keypoints = np.loadtxt(A_path, delimiter=' ')
         if keypoints.shape[0] == 70:
-            # if all 70 landmarks are available get only 12 for the eyes
-            pts = keypoints[36:48, :].astype(np.int32) # eyes landmarks from 70 landmarks
+            # if all 70 landmarks are available get only 14 for the eyes
+            pts0 = keypoints[36:48, :].astype(np.int32) # eyes landmarks from 70 landmarks
+            pts1 = keypoints[68:70, :].astype(np.int32) # eyes landmarks from 70 landmarks
+            pts = np.concatenate([pts0, pts1], axis=0)
         else:
             pts = keypoints.astype(np.int32)
         eyes_center = np.median(pts, axis=0)
