@@ -6,6 +6,7 @@ import argparse
 import sys
 import scipy.io as io
 from shutil import copyfile
+import itertools
 
 from reconstruction import NMFCRenderer
 
@@ -246,6 +247,8 @@ def main():
     parser.add_argument('--no_translation_adaptation', action='store_true',
                         help='Do not perform translation adaptation \
                               using statistics from target video.')
+    parser.add_argument('--keep_target_pose', action='store_true',
+                        help='Use the poses from target video.')
     parser.add_argument('--standardize', action='store_true',
                         help='Perform adaptation using also std from videos.')
     parser.add_argument('--no_eye_gaze', action='store_true',
@@ -288,23 +291,44 @@ def main():
     # Read camera parameters from target
     t_cam_params, _ = read_params('cam', os.path.join(args.dataset_path,
                                   args.split_t, 'misc'), args.target_id)
-    # Compute the camera parameters.
-    cam_params = compute_cam_params(s_cam_params, t_cam_params, args)
+    if args.keep_target_pose:
+        s_len = len(s_cam_params)
+        t_len = len(t_cam_params)
+        if s_len <= t_len:
+            cam_params = t_cam_params[0:s_len]
+        else:
+            n_repeat = (s_len - 1) // t_len + 1
+            cam_params = [t_cam_params] * n_repeat
+            cam_params = list(itertools.chain.from_iterable(cam_params))
+            cam_params = cam_params[0:s_len]
+    else:
+        # Compute the camera parameters.
+        cam_params = compute_cam_params(s_cam_params, t_cam_params, args)
     # Create NMFC images
     nmfcs = renderer.computeNMFCs(cam_params, id_params, exp_params)
     # Create Eye landmarks
     eye_landmarks = None
     if not args.no_eye_gaze:
-        eye_landmarks_source = read_eye_landmarks(os.path.join(args.dataset_path,
-                                args.split_s, 'landmarks70'), args.source_id)
         eye_landmarks_target = read_eye_landmarks(os.path.join(args.dataset_path,
                                 args.split_t, 'landmarks70'), args.target_id)
+        if args.keep_target_pose:
+            if s_len <= t_len:
+                eye_landmarks_source = eye_landmarks_target[0:s_len]
+            else:
+                n_repeat = (s_len - 1) // t_len + 1
+                eye_landmarks_source = [eye_landmarks_target] * n_repeat
+                eye_landmarks_source = list(itertools.chain.from_iterable(eye_landmarks_source))
+                eye_landmarks_source = eye_landmarks_source[0:s_len]
+        else:
+            eye_landmarks_source = read_eye_landmarks(os.path.join(args.dataset_path,
+                                    args.split_s, 'landmarks70'), args.source_id)
         eye_centres = search_eye_centres(nmfcs)
         eye_ratios = compute_eye_landmarks_ratio(eye_landmarks_source,
                                                  eye_landmarks_target)
         eye_landmarks = adapt_eye_landmarks(eye_landmarks_source, eye_centres, eye_ratios,
                                             s_cam_params, cam_params)
-        eye_landmarks = smoothen_eye_landmarks(eye_landmarks)
+        if not args.keep_target_pose:
+            eye_landmarks = smoothen_eye_landmarks(eye_landmarks)
     source_images_paths = [os.path.splitext(path.replace('exp_coeffs',
                            'images'))[0] + '.png' for path in paths]
     save_results(nmfcs, eye_landmarks, source_images_paths, args)

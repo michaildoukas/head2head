@@ -5,8 +5,7 @@ epoch=latest # hardcoded
 
 python preprocessing/reenact.py --dataset_name $dataset_name \
                                 --source_id $source_name \
-                                --target_id $target_name \
-                                #--standardize # Set for targets: Trudeau
+                                --target_id $target_name
 
 python test.py --checkpoints_dir checkpoints/$dataset_name \
                --results_dir results/$dataset_name \
