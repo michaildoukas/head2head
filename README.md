@@ -62,8 +62,8 @@ We have trained and tested Head2Head on the seven target identities shown below:
 
 #### Download Head2Head Dataset
 
-- Link to the seven original video files, before ROI extraction: [\[original_videos.zip\]](https://www.dropbox.com/s/moh71pvtll9n9ye/original_videos.zip?dl=1). The corresponding YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
-- Link to full dataset, with the extracted ROI frames and 3D reconstruction data (NMFCs, landmarks, expression, identity and camera parameters): [\[dataset.zip\]](https://www.dropbox.com/s/saimhaftz27fjqt/dataset.zip?dl=1)
+- Link to the seven original video files, before ROI extraction: [\[original_videos.zip\]](https://www.dropbox.com/s/qzpfz47nwtfryad/original_videos.zip?dl=1). The corresponding YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
+- Link to full dataset, with the extracted ROI frames and 3D reconstruction data (NMFCs, landmarks, expression, identity and camera parameters): [\[dataset.zip\]](https://www.dropbox.com/s/424wm7cp2fa4o2o/dataset.zip?dl=1)
 
 Alternatively, you can download Head2Head dataset, by running:
 
@@ -86,11 +86,19 @@ head2headDataset ----- original_videos
                                     (same    |
                                   structure) --- images (ROI RGB frames)
                                              |
-                                             --- landmarks (5 facial landmarks)
+                                             --- landmarks70 (68 + 2 facial landmarks)
                                              |
                                              --- misc (camera parameters - pose)
                                              |
                                              --- nmfcs (GAN conditional input)
+```
+
+#### Head2Head Dataset version 2
+
+We have added 7 new identities, with longer training video footage (10 mins +). Download via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/7c8lci8c8b8pli7/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/kcdyoe85cob97lt/dataset.zip?dl=1), or by running:
+
+```bash
+python scripts/download_dataset.py --dataset head2headDatasetv2
 ```
 
 ## Create your Dataset
@@ -111,10 +119,10 @@ python preprocessing/detect.py --original_videos_path <videos_path> --dataset_na
 
 - ```<split>``` is the data split to place the file(s). If set to ```train```, the videos-identities can be used as target, but the last one third of the frames is placed in the test set, enabling self reenactment experiments. When set to ```test```, the videos-identities can be used only as source and no frames are placed in the training set. (default: ```train```)
 
-#### 68 facial landmarks detection
+#### 68 + 2 facial landmarks detection
 
 ```bash
-python preprocessing/detect_landmarks68.py --dataset_name <dataset_name>
+python preprocessing/detect_landmarks70.py --dataset_name <dataset_name>
 ```
 
 #### 3D face reconstruction
@@ -154,16 +162,25 @@ The following commands generates a video, using as driving input (source video) 
 
 Synthesised videos are saved under the ```./results``` directory.
 
-## Test source-to-target reenactment
+## Test source-to-target head reenactment
 
 For transferring the expressions and head pose from a source person, to a target person in our dataset, first we compute the NMFC frames that correspond to the source video, using the 3DMM identity coefficients computed from the target. For better quality, we adapt the mean Scale and Translation camera parameters of the source to the target. Then, we generate the synthetic video, using these NMFC frames as conditional input.
 
-Given a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_name>```, head to head reenactment results are generated after running:
+Given a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_name>```, head reenactment results are generated after running:
 ```bash
 ./scripts/test/test_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
 ```
 
-## Real-time source-to-target reenactment
+## Test source-to-target face reenactment
+
+Instead of transferring the head pose from a source video, we can perform simple face reenactment, by keeping the original pose of the target video, and using only the expressions (inner facial movements) of the source.
+
+For a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_name>```, face reenactment results are generated after running:
+```bash
+./scripts/test/test_face_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
+```
+
+## Real-time reenactment
 
 TODO
 

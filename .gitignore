@@ -7,7 +7,7 @@ datasets/head2headDataset/dataset
 datasets/head2headDataset/original_videos
 datasets/head2headDatasetv2/dataset
 datasets/head2headDatasetv2/original_videos
-datasets/faceforensicspp*
+datasets/faceforensicspp/
 models/flownet2_pytorch/*.tar
 preprocessing/models/
 preprocessing/files/

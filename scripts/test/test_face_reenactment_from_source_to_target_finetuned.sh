@@ -5,7 +5,8 @@ epoch=latest # hardcoded
 
 python preprocessing/reenact.py --dataset_name $dataset_name \
                                 --source_id $source_name \
-                                --target_id $target_name
+                                --target_id $target_name \
+                                --keep_target_pose
 
 python test.py --checkpoints_dir checkpoints/$dataset_name \
                --results_dir results/$dataset_name \

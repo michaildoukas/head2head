@@ -20,10 +20,10 @@ def main():
     print('Downloading models and files for face reconstruction and flownet2 \n')
     # Download urls (hardcoded)
     download_urls = \
-        [('preprocessing', 'https://www.dropbox.com/s/vzr7snb82n42mfw/files.zip?dl=1'),
-         ('preprocessing', 'https://www.dropbox.com/s/uzqz2p9fw3ps7pk/models.zip?dl=1'),
-         ('models/flownet2_pytorch', 'https://www.dropbox.com/s/ns7i26gpmhtnoxe/FlowNet2_checkpoint.pth_faceflow.tar?dl=1'),
-         ('models/flownet2_pytorch', 'https://www.dropbox.com/s/55uwylzmth795xh/FlowNet2_checkpoint.pth.tar?dl=1')]
+        [('preprocessing', 'https://www.dropbox.com/s/woijiy3gqgfz1j7/files.zip?dl=1'),
+         ('preprocessing', 'https://www.dropbox.com/s/lgxigl5v6rmyq6g/models.zip?dl=1'),
+         ('models/flownet2_pytorch', 'https://www.dropbox.com/s/qs0fb1itevjs886/FlowNet2_checkpoint.pth_faceflow.tar?dl=1'),
+         ('models/flownet2_pytorch', 'https://www.dropbox.com/s/nmqeuv4nw3nfvag/FlowNet2_checkpoint.pth.tar?dl=1')]
     for i, url in enumerate(download_urls):
         fpath = os.path.join(url[0], url[1].split('/')[-1].split('?')[0])
         if not os.path.exists(fpath):

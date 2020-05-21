@@ -20,16 +20,19 @@ def main():
     # Argument Parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default='head2headDataset',
-                        choices=['head2headDataset', 'faceforensicspp'],
-            help='The dataset to download. [head2headDataset|faceforensicspp]')
+                        choices=['head2headDataset', 'head2headDatasetv2', 'faceforensicspp'],
+                        help='The dataset to download. \
+                        [head2headDataset|head2headDatasetv2|faceforensicspp]')
     args = parser.parse_args()
     print('Download complete %s dataset\n' % args.dataset)
-    # Download paths (hardcoded)
-    if args.dataset == 'head2headDataset':
-        # Download paths (hardcoded)
-        save_dir = 'datasets/head2headDataset'
-        links_list = [('dataset.zip', 'https://www.dropbox.com/s/saimhaftz27fjqt/dataset.zip?dl=1'),
-                      ('original_videos.zip', 'https://www.dropbox.com/s/moh71pvtll9n9ye/original_videos.zip?dl=1')]
+    if args.dataset == 'head2headDataset' or args.dataset == 'head2headDatasetv2':
+        save_dir = os.path.join('datasets', args.dataset)
+        if args.dataset == 'head2headDataset':
+            links_list = [('dataset.zip', 'https://www.dropbox.com/s/424wm7cp2fa4o2o/dataset.zip?dl=1'),
+                          ('original_videos.zip', 'https://www.dropbox.com/s/qzpfz47nwtfryad/original_videos.zip?dl=1')]
+        else:
+            links_list = [('dataset.zip', 'https://www.dropbox.com/s/kcdyoe85cob97lt/dataset.zip?dl=1'),
+                          ('original_videos.zip', 'https://www.dropbox.com/s/7c8lci8c8b8pli7/original_videos.zip?dl=1')]
         for link in links_list:
             save_path = os.path.join(save_dir, link[0])
             if not os.path.exists(save_path):
