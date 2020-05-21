@@ -170,7 +170,7 @@ The following commands generates a video, using as driving input (source video) 
 
 Synthesised videos are saved under the ```./results``` directory.
 
-## Test source-to-target head reenactment
+## Test head reenactment
 
 For transferring the expressions and head pose from a source person, to a target person in our dataset, first we compute the NMFC frames that correspond to the source video, using the 3DMM identity coefficients computed from the target. For better quality, we adapt the mean Scale and Translation camera parameters of the source to the target. Then, we generate the synthetic video, using these NMFC frames as conditional input.
 
@@ -179,7 +179,7 @@ Given a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_n
 ./scripts/test/test_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
 ```
 
-## Test source-to-target face reenactment
+## Test face reenactment
 
 Instead of transferring the head pose from a source video, we can perform simple face reenactment, by keeping the original pose of the target video, and using only the expressions (inner facial movements) of the source.
 
