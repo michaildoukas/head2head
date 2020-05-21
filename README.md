@@ -1,5 +1,7 @@
 # Head2Head: Video-based Neural Head Synthesis
 
+[\[Paper\]](link) [\[Video Demo\]](link) 
+
 | ![imgs/head2head_demo.gif](imgs/head2head_demo.gif) |
 |:--:|
 | *Transferring head pose, facial expressions and eye gaze from a source video to a target identity* |
@@ -103,7 +105,7 @@ head2headDataset ----- original_videos
 
 #### Head2Head Dataset version 2
 
-We have added 7 new identities, with longer training video footage (10 mins +). Download via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/7c8lci8c8b8pli7/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/kcdyoe85cob97lt/dataset.zip?dl=1), or by running:
+We have added 7 new identities, with longer training video footage ( > 10 mins). Download via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/7c8lci8c8b8pli7/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/kcdyoe85cob97lt/dataset.zip?dl=1), or by running:
 
 ```bash
 python scripts/download_dataset.py --dataset head2headDatasetv2
