@@ -6,7 +6,7 @@
 
 | ![imgs/face_reenactment_demo.gif](imgs/face_reenactment_demo.gif) | ![imgs/head_reenactment_demo.gif](imgs/head_reenactment_demo.gif) |
 |:--:|:--:|
-| *Simple face reenactment (facial expression transfer)* | *Complete head reenactment (head pose, expression, eyes transfer)* |
+| *Simple face reenactment (facial expression transfer)* | *Complete head reenactment (pose, expression, eyes transfer)* |
 
 ## Installation
 
