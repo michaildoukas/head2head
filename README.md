@@ -1,6 +1,6 @@
 # Head2Head: Video-based Neural Head Synthesis
 
-| ![](imgs/head2head_demo.gif) |
+| ![imgs/head2head_demo.gif](imgs/head2head_demo.gif) |
 |:--:|
 | *Transferring head pose, facial expressions and eye gaze from a source video to a target identity* |
 
