@@ -1,5 +1,13 @@
 # Head2Head: Video-based Neural Head Synthesis
 
+| ![](imgs/head2head_demo.gif) |
+|:--:|
+| *Transferring head pose, facial expressions and eye gaze from a source video to a target identity* |
+
+| ![imgs/face_reenactment_demo.gif](imgs/face_reenactment_demo.gif) | ![imgs/head_reenactment_demo.gif](imgs/head_reenactment_demo.gif) |
+|:--:|:--:|
+| *Simple face reenactment (facial expression transfer)* | *Complete head reenactment (head pose, expression, eyes transfer)* |
+
 ## Installation
 
 Clone the repository

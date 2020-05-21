@@ -161,15 +161,20 @@ def search_eye_centres(nmfcs):
         ret.append(centres)
     return ret
 
-def smoothen_eye_landmarks(eye_landmarks, window_size=5):
+def smoothen_eye_landmarks(eye_landmarks, window_size=1):
+    window_size = max(min(window_size, len(eye_landmarks)), 1)
     left_p = window_size // 2
     right_p =  window_size // 2 if window_size % 2 == 1 else window_size // 2 - 1
     window = np.ones(int(window_size))/float(window_size) # kernel-filter
     eye_landmarks = np.array(eye_landmarks)
     # Padding
-    left_padding = np.stack([eye_landmarks[0]] * left_p, axis=0)
-    right_padding = np.stack([eye_landmarks[-1]] * right_p, axis=0)
-    eye_landmarks_padded = np.concatenate([left_padding, eye_landmarks, right_padding])
+    left_padding = np.stack([eye_landmarks[0]] * left_p, axis=0) if left_p > 0 else None
+    right_padding = np.stack([eye_landmarks[-1]] * right_p, axis=0) if right_p > 0 else None
+    eye_landmarks_padded = eye_landmarks
+    if left_padding is not None:
+        eye_landmarks_padded = np.concatenate([left_padding, eye_landmarks_padded])
+    if right_padding is not None:
+        eye_landmarks_padded = np.concatenate([eye_landmarks_padded, right_padding])
     for land in range(eye_landmarks.shape[1]):
         for coord in range(eye_landmarks.shape[2]):
             eye_landmarks[:, land, coord] = np.convolve(eye_landmarks_padded[:, land, coord], window, 'valid')
