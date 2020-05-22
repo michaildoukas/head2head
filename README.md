@@ -115,7 +115,7 @@ head2headDataset ----- original_videos
 
 ![](imgs/head2headDatasetv2_identities.png)
 
-We have added 8 new identities, with longer training video footage ( > 10 mins). Please download this dataset via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/5s3bqkvc4asppgd/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/t2unzm9logbzg1e/dataset.zip?dl=1), or by running:
+We have added eight new identities, with longer training video footage ( > 10 mins). Please download this dataset via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/5s3bqkvc4asppgd/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/t2unzm9logbzg1e/dataset.zip?dl=1), or by running:
 
 ```bash
 python scripts/download_dataset.py --dataset head2headDatasetv2
