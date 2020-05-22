@@ -107,7 +107,7 @@ head2headDataset ----- original_videos
 
 ![](imgs/head2headDatasetv2_identities.png)
 
-We have added 8 new identities, with longer training video footage ( > 10 mins). Please download this dataset via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/7c8lci8c8b8pli7/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/kcdyoe85cob97lt/dataset.zip?dl=1), or by running:
+We have added 8 new identities, with longer training video footage ( > 10 mins). Please download this dataset via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/5s3bqkvc4asppgd/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/t2unzm9logbzg1e/dataset.zip?dl=1), or by running:
 
 ```bash
 python scripts/download_dataset.py --dataset head2headDatasetv2
@@ -203,7 +203,14 @@ In order to increase the generative performance of head2head in very short targe
 ```bash
 python scripts/download_dataset.py --dataset faceforensicspp
 ```
-Then, train head2head on this multi-person dataset:
+
+Compute 68 + 2 landmarks, as they are not included in the downloaded files:
+
+```bash
+python preprocessing/detect_landmarks70.py --dataset_name faceforensicspp
+```
+
+Train head2head on this multi-person dataset:
 ```bash
 ./scripts/train/train_faceforensicspp.sh
 ```

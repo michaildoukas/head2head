@@ -31,8 +31,8 @@ def main():
             links_list = [('dataset.zip', 'https://www.dropbox.com/s/424wm7cp2fa4o2o/dataset.zip?dl=1'),
                           ('original_videos.zip', 'https://www.dropbox.com/s/qzpfz47nwtfryad/original_videos.zip?dl=1')]
         else:
-            links_list = [('dataset.zip', 'https://www.dropbox.com/s/kcdyoe85cob97lt/dataset.zip?dl=1'),
-                          ('original_videos.zip', 'https://www.dropbox.com/s/7c8lci8c8b8pli7/original_videos.zip?dl=1')]
+            links_list = [('dataset.zip', 'https://www.dropbox.com/s/t2unzm9logbzg1e/dataset.zip?dl=1'),
+                          ('original_videos.zip', 'https://www.dropbox.com/s/5s3bqkvc4asppgd/original_videos.zip?dl=1')]
         for link in links_list:
             save_path = os.path.join(save_dir, link[0])
             if not os.path.exists(save_path):
