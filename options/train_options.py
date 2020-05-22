@@ -7,7 +7,7 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--display_freq', type=int, default=1, help='frequency of showing training results on screen')
         self.parser.add_argument('--print_freq', type=int, default=1, help='frequency of showing training results on console')
         self.parser.add_argument('--save_latest_freq', type=int, default=100, help='frequency of saving the latest results')
-        self.parser.add_argument('--save_epoch_freq', type=int, default=5, help='frequency of saving checkpoints at the end of epochs')
+        self.parser.add_argument('--save_epoch_freq', type=int, default=100, help='frequency of saving checkpoints at the end of epochs')
         self.parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
         self.parser.add_argument('--phase', type=str, default='train', help='train, val, test, etc')
         self.parser.add_argument('--which_epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')

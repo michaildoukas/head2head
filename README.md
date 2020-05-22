@@ -183,7 +183,7 @@ For transferring the expressions and head pose from a source person, to a target
 
 Given a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_name>```, head reenactment results are generated after running:
 ```bash
-./scripts/test/test_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
+./scripts/test/test_head_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
 ```
 
 ## Test face reenactment
@@ -215,7 +215,7 @@ python preprocessing/detect_landmarks70.py --dataset_name faceforensicspp
 
 Train head2head on this multi-person dataset:
 ```bash
-./scripts/train/train_faceforensicspp.sh
+./scripts/train/train_on_faceforensicspp.sh
 ```
 Finally, fine-tune on ```<target_name>``` from ```<dataset_name>```:
 ```bash
