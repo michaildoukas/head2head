@@ -106,7 +106,7 @@ def read_mp4(mp4_path, args):
     return images, fps
 
 def check_boxes(boxes, img_size, args):
-    # Check if there are None boxes. Fix them if only a few (like 5) are None
+    # Check if there are None boxes.
     for i in range(len(boxes)):
         if boxes[i] is None:
             boxes[i] = next((item for item in boxes[i+1:] if item is not None), boxes[i-1])
@@ -133,28 +133,24 @@ def check_boxes(boxes, img_size, args):
     if maxim_dst > args.dst_threshold:
          print('L_inf distance between bounding boxes %.4f larger than threshold' % maxim_dst)
          return False, [None]
-    if args.keep_fixed_box:
-        avg_box = np.median(smooth_boxes, axis=0)
-        new_boxes = np.stack([avg_box] * smooth_boxes.shape[0], axis=0)
-    else:
-        new_boxes = smooth_boxes
-    # Keep a fixed up-bottom, right-left offset and make boxes square.
-    offset_w = np.mean(new_boxes[:,2] - new_boxes[:,0])
-    offset_h = np.mean(new_boxes[:,3] - new_boxes[:,1])
+    # Get average box
+    avg_box = np.median(smooth_boxes, axis=0)
+    # Make boxes square.
+    offset_w = avg_box[2] - avg_box[0]
+    offset_h = avg_box[3] - avg_box[1]
     offset_dif = (offset_h - offset_w) / 2
     # width
-    new_boxes[:,0] = new_boxes[:,2] - offset_w - offset_dif
-    new_boxes[:,2] = new_boxes[:,2] + offset_dif
+    avg_box[0] = avg_box[2] - offset_w - offset_dif
+    avg_box[2] = avg_box[2] + offset_dif
     # height - center a bit lower
-    new_boxes[:,3] = new_boxes[:,3] + args.height_recentre * offset_h
-    new_boxes[:,1] = new_boxes[:,3] - offset_h
-    for i in range(new_boxes.shape[0]):
-        boxes[i] = list(new_boxes[i,:])
-    return True, boxes
+    avg_box[3] = avg_box[3] + args.height_recentre * offset_h
+    avg_box[1] = avg_box[3] - offset_h
+    return True, avg_box
 
 def get_faces(detector, images, box, args):
     ret_faces = []
     all_boxes = []
+    avg_box = None
     all_imgs = []
     if box is None:
         # Get bounding boxes
@@ -164,19 +160,19 @@ def get_faces(detector, images, box, args):
             boxes, _, _ = detector.detect(imgs_pil, landmarks=True)
             all_boxes.extend(boxes)
             all_imgs.extend(imgs_pil)
-        # Check if boxes are fine and do temporal smoothing.
+        # Check if boxes are fine, do temporal smoothing, return average box.
         img_size = (all_imgs[0].size[0] + all_imgs[0].size[1]) / 2
-        stat, all_boxes = check_boxes(all_boxes, img_size, args)
+        stat, avg_box = check_boxes(all_boxes, img_size, args)
     else:
         all_imgs = [Image.fromarray(image) for image in images]
-        stat, all_boxes = True, np.stack([box] * len(all_imgs), axis=0)
+        stat, avg_box = True, box
     # Crop face regions.
     if stat:
         print('Extracting faces')
-        for img, box in tqdm(zip(all_imgs, all_boxes), total=len(all_boxes)):
-            face = extract_face(img, box, args.cropped_image_size, args.margin)
+        for img in tqdm(all_imgs, total=len(all_imgs)):
+            face = extract_face(img, avg_box, args.cropped_image_size, args.margin)
             ret_faces.append(face)
-    return stat, ret_faces, all_boxes[0]
+    return stat, ret_faces, avg_box
 
 def detect_and_save_faces(detector, name, mp4_paths, split, args):
     start_i = 0
@@ -219,7 +215,6 @@ def main():
     parser.add_argument('--window_length', default=99, type=int, help='savgol filter window length.')
     parser.add_argument('--polyorder', default=3, type=int, help='savgol filter polyorder.')
     parser.add_argument('--height_recentre', default=0.0, type=float, help='The amount of re-centring bounding boxes lower on the face.')
-    parser.add_argument('--keep_fixed_box', action='store_true', default=True, help='Keep a fixed bounding box throughout the video.')
     parser.add_argument('--train_seq_length', default=50, type=int, help='The number of frames for each training sub-sequence.')
     parser.add_argument('--test_seq_ratio', default=0.33, type=int, help='The ratio of frames left for test (self-reenactment)')
     parser.add_argument('--split', default='train', choices=['train', 'test'], type=str, help='The split for data [train|test]')

@@ -1,6 +1,6 @@
 # Head2Head: Video-based Neural Head Synthesis
 
-[\[Paper\]](link) [\[Video Demo\]](link) 
+[\[Paper\]](link) [\[Video Demo\]](link)
 
 | ![imgs/head2head_demo.gif](imgs/head2head_demo.gif) |
 |:--:|
@@ -68,7 +68,7 @@ python scripts/download_files.py
 
 We have trained and tested Head2Head on the seven target identities shown below:
 
-![](imgs/head2headDataset_identities.gif)
+![](imgs/head2headDataset_identities.png)
 
 #### Download Head2Head Dataset
 
@@ -105,7 +105,9 @@ head2headDataset ----- original_videos
 
 #### Head2Head Dataset version 2
 
-We have added 7 new identities, with longer training video footage ( > 10 mins). Download via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/7c8lci8c8b8pli7/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/kcdyoe85cob97lt/dataset.zip?dl=1), or by running:
+![](imgs/head2headDatasetv2_identities.png)
+
+We have added 8 new identities, with longer training video footage ( > 10 mins). Please download this dataset via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/7c8lci8c8b8pli7/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/kcdyoe85cob97lt/dataset.zip?dl=1), or by running:
 
 ```bash
 python scripts/download_dataset.py --dataset head2headDatasetv2
