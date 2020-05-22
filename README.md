@@ -19,10 +19,24 @@ cd head2head
 ```
 
 We provide two alternatives for installing Head2Head required packages:
-- Build a Docker image (Recommended, requires sudo privileges)
 - Create a Conda environment (Requires python 3.7, CUDA 9.2 and Vulkan already installed)
+- Build a Docker image (Recommended, requires sudo privileges)
 
-#### Build a Docker image (option 1):
+#### (option 1) Create a Conda environment:
+Create a conda environment, using the provided ```conda-env.txt``` file.
+```bash
+conda create --name head2head --file conda-env.txt
+```
+Activate the environment.
+```bash
+conda activate head2head
+```
+Install dlib, facenet-pytorch, insightface and mxnet with pip (inside the environment):
+```bash
+pip install dlib insightface mxnet-cu92 facenet-pytorch
+```
+
+#### (option 2) Build a Docker image:
 Install Docker and its dependencies:
 ```bash
 sudo ./docker/ubuntu/xenial/vulkan-base/pre_docker_install.sh
@@ -40,19 +54,13 @@ Change to head2head directory (inside the container):
 cd head2head
 ```
 
-#### Create a Conda environment (option 2):
-Create a conda environment, using the provided ```conda-env.txt``` file.
+#### Compile FlowNet2
+
 ```bash
-conda create --name head2head --file conda-env.txt
+python scripts/compile_flownet2.py
 ```
-Activate the environment.
-```bash
-conda activate head2head
-```
-Install dlib, facenet-pytorch, insightface and mxnet with pip (inside the environment):
-```bash
-pip install dlib insightface mxnet-cu92 facenet-pytorch
-```
+
+If you are using docker, run the command above each time you run the container.
 
 #### Download essential files
 
@@ -148,11 +156,6 @@ python preprocessing/reconstruct.py --dataset_name <dataset_name>
 Please execute the two commands above (landmark detection and face reconstruction) each time you use the face detection script to add new identities in the ```<dataset_name>``` dataset.
 
 ## Train a head2head model
-
-First, compile FlowNet2:
-```bash
-python scripts/compile_flownet2.py
-```
 
 In order to train a new person-specific model from scratch, use:
 
