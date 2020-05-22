@@ -18,13 +18,13 @@ class videoDataset(BaseDataset):
 
         # Get dataset directories.
         self.dir_nmfc_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'nmfcs')
-        self.nmfc_video_paths = make_video_dataset(self.dir_nmfc_video, opt.target_name, source_name)
+        self.nmfc_video_paths = make_video_dataset(self.dir_nmfc_video, opt.target_name, source_name, opt.max_n_sequences)
         self.dir_rgb_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'images')
-        self.rgb_video_paths = make_video_dataset(self.dir_rgb_video, opt.target_name, source_name)
+        self.rgb_video_paths = make_video_dataset(self.dir_rgb_video, opt.target_name, source_name, opt.max_n_sequences)
         assert_valid_pairs(self.nmfc_video_paths, self.rgb_video_paths)
         if not opt.no_eye_gaze or (self.opt.use_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
             self.dir_landmark_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'landmarks70')
-            self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name, source_name)
+            self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name, source_name, opt.max_n_sequences)
             assert_valid_pairs(self.landmark_video_paths, self.rgb_video_paths)
 
         self.n_of_seqs = len(self.nmfc_video_paths)

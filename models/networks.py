@@ -7,7 +7,6 @@ from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
 from torchvision import models
-from .flownet2_pytorch.networks.resample2d_package.resample2d import Resample2d
 
 def get_norm_layer(norm_type='instance'):
     if norm_type == 'batch':
@@ -35,7 +34,7 @@ def weights_init(m):
 
 def define_G(input_nc, output_nc, prev_output_nc, ngf, n_downsampling, norm, gpu_ids=[], opt=[]):
     norm_layer = get_norm_layer(norm_type=norm)
-    netG = Generator(input_nc, output_nc, prev_output_nc, ngf, n_downsampling, opt.n_blocks, norm_layer)
+    netG = Generator(input_nc, output_nc, prev_output_nc, ngf, n_downsampling, opt.n_blocks, norm_layer, opt.no_prev_output)
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
         netG.cuda(gpu_ids[0])
@@ -62,34 +61,35 @@ def print_network(net):
 
 class Generator(nn.Module):
     def __init__(self, input_nc, output_nc, prev_output_nc, ngf, n_downsampling, n_blocks,
-                 norm_layer, padding_type='reflect'):
+                 norm_layer, no_prev_output, padding_type='reflect'):
         assert(n_blocks >= 0)
         super(Generator, self).__init__()
-        self.resample = Resample2d()
         self.n_downsampling = n_downsampling
+        self.no_prev_output = no_prev_output
         activation = nn.ReLU(True)
 
         model_down_seg = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation]
-        model_down_img = [nn.ReflectionPad2d(3), nn.Conv2d(prev_output_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation]
+        if not no_prev_output:
+            model_down_img = [nn.ReflectionPad2d(3), nn.Conv2d(prev_output_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation]
         for i in range(n_downsampling):
             mult = 2**i
             model_down_seg += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1),
                                norm_layer(ngf * mult * 2), activation]
-            model_down_img += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1),
-                               norm_layer(ngf * mult * 2), activation]
+            if not no_prev_output:
+                model_down_img += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1),
+                                   norm_layer(ngf * mult * 2), activation]
 
         mult = 2**n_downsampling
         for i in range(n_blocks - n_blocks//2):
             model_down_seg += [ResnetBlock(ngf * mult, padding_type=padding_type, activation=activation, norm_layer=norm_layer)]
-            model_down_img += [ResnetBlock(ngf * mult, padding_type=padding_type, activation=activation, norm_layer=norm_layer)]
+            if not no_prev_output:
+                model_down_img += [ResnetBlock(ngf * mult, padding_type=padding_type, activation=activation, norm_layer=norm_layer)]
 
         model_res_img = []
-        model_res_flow = []
         for i in range(n_blocks//2):
             model_res_img += [ResnetBlock(ngf * mult, padding_type=padding_type, activation=activation, norm_layer=norm_layer)]
 
         model_up_img = []
-        model_up_flow = []
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
             model_up_img += [nn.ConvTranspose2d(ngf*mult, ngf*mult//2, kernel_size=3, stride=2, padding=1, output_padding=1),
@@ -98,13 +98,17 @@ class Generator(nn.Module):
         model_final_img = [nn.ReflectionPad2d(3), nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0), nn.Tanh()]
 
         self.model_down_seg = nn.Sequential(*model_down_seg)
-        self.model_down_img = nn.Sequential(*model_down_img)
+        if not no_prev_output:
+            self.model_down_img = nn.Sequential(*model_down_img)
         self.model_res_img = nn.Sequential(*model_res_img)
         self.model_up_img = nn.Sequential(*model_up_img)
         self.model_final_img = nn.Sequential(*model_final_img)
 
     def forward(self, input, img_prev, isTrain):
-        downsample = self.model_down_seg(input) + self.model_down_img(img_prev)
+        if not self.no_prev_output:
+            downsample = self.model_down_seg(input) + self.model_down_img(img_prev)
+        else:
+            downsample = self.model_down_seg(input)
         img_feat = self.model_up_img(self.model_res_img(downsample))
         img_final = self.model_final_img(img_feat)
         return img_final

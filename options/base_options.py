@@ -9,6 +9,7 @@ class BaseOptions():
         self.initialized = False
 
     def initialize(self):
+        self.parser.add_argument('--max_n_sequences', type=int, default=None, help='Maximum number of sub-sequences to use.')
         self.parser.add_argument('--no_augment_input', action='store_true', help='if true, do not perform input data augmentation.')
         self.parser.add_argument('--ROI_size', type=int, default=72, help='spatial dimension size of ROI.')
         self.parser.add_argument('--use_mouth_D', action='store_true', default=True, help='if true, Use mouth discriminator')
@@ -29,6 +30,7 @@ class BaseOptions():
         self.parser.add_argument('--target_name', type=str, default=None, help='Name of target person. If None, train on all targets.')
 
         # network arch
+        self.parser.add_argument('--no_prev_output', action='store_true', help='if true, do not use the previously generated frames in G input.')
         self.parser.add_argument('--ngf', type=int, default=64, help='# of gen filters in first conv layer')
         self.parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in first conv layer')
         self.parser.add_argument('--n_blocks', type=int, default=9, help='number of resnet blocks in generator')

@@ -23,7 +23,7 @@ def make_dataset(dir):
                 images.append(path)
     return images
 
-def make_video_dataset(dir, target_name, source_name):
+def make_video_dataset(dir, target_name, source_name, max_n_sequences=None):
     images = []
     if dir:
         assert os.path.isdir(dir), '%s is not a valid directory' % dir
@@ -41,6 +41,8 @@ def make_video_dataset(dir, target_name, source_name):
                             paths.append(os.path.join(root, f))
             if len(paths) > 0:
                 images.append(paths)
+        if max_n_sequences is not None:
+            images = images[:max_n_sequences]
     return images
 
 def assert_valid_pairs(A_paths, B_paths):
