@@ -242,7 +242,7 @@ def main():
             # If output directory is specified save frames there.
             if opt.demo_dir is not None:
                 result_path = os.path.join(opt.demo_dir, "{:06d}".format(iter) + '.png')
-                #cv2.imwrite(result_path, result)
+                cv2.imwrite(result_path, result)
             else:
                 cv2.imshow(window_name, result)
         except queue.Empty: # If empty queue continue.
@@ -298,8 +298,6 @@ def main():
         t1 = time.perf_counter()
         dt = t1 - t0
         print('fps: %0.2f' % (1/dt))
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
 
     # Terminate proccesses and join
     for process in proccesses:

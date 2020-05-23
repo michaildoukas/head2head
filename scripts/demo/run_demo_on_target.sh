@@ -7,4 +7,4 @@ python demo.py --checkpoints_dir checkpoints/$dataset_name \
                --name head2head_$target_name \
                --dataroot datasets/$dataset_name/dataset \
                --do_reenactment \
-               --demo_dir demo
+               --demo_dir results_demo
