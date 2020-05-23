@@ -7,8 +7,7 @@ import sys
 import scipy.io as io
 from shutil import copyfile
 import itertools
-
-from reconstruction import NMFCRenderer
+from preprocessing.reconstruction import NMFCRenderer
 
 def mkdirs(paths):
     for path in paths:
@@ -130,15 +129,18 @@ def read_eye_landmarks(path, speaker_id):
             eye_landmarks_right.append(right) # Right eye
     return [eye_landmarks_left, eye_landmarks_right]
 
-def search_eye_centres(nmfcs):
+def search_eye_centres(nmfcs, prev_arg_mins=None):
     points = [np.array([192, 180, 81]), # Left eye NMFC code
               np.array([192, 180, 171])] # Right eye NMFC code
     ret = []
-    for point in points:
+    arg_mins = []
+    if prev_arg_mins is None:
+        prev_arg_mins = [None, None]
+    for point, prev_arg_min in zip(points, prev_arg_mins):
         centres = []
         for n, nmfc in enumerate(nmfcs):
             min_dst = 99999999
-            if n == 0:
+            if prev_arg_min is None:
                 lim_i_l, lim_i_h = 0, nmfc.shape[0]-1
                 lim_j_l, lim_j_h = 0, nmfc.shape[1]-1
             else:
@@ -155,11 +157,10 @@ def search_eye_centres(nmfcs):
                     if dst < min_dst:
                         min_dst = dst
                         arg_min = np.array([i, j])
-            #print(min_dst)
-            prev_arg_min = arg_min
             centres.append(np.flip(arg_min)) # flip, since landmarks are width, heigth
+        arg_mins.append(arg_min)
         ret.append(centres)
-    return ret
+    return ret, arg_mins
 
 def smoothen_eye_landmarks(eye_landmarks, window_size=1):
     window_size = max(min(window_size, len(eye_landmarks)), 1)
@@ -327,7 +328,7 @@ def main():
         else:
             eye_landmarks_source = read_eye_landmarks(os.path.join(args.dataset_path,
                                     args.split_s, 'landmarks70'), args.source_id)
-        eye_centres = search_eye_centres(nmfcs)
+        eye_centres, _ = search_eye_centres(nmfcs)
         eye_ratios = compute_eye_landmarks_ratio(eye_landmarks_source,
                                                  eye_landmarks_target)
         eye_landmarks = adapt_eye_landmarks(eye_landmarks_source, eye_centres, eye_ratios,

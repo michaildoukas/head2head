@@ -2,15 +2,15 @@ import cv2
 import os
 import numpy as np
 import pickle
-import transform
+from preprocessing import transform
 import sys
 import scipy.io as io
 import glob
 from scipy import optimize
 from tqdm import tqdm
-from multiface import fc_predictor
-from avatars import serialize
-from hephaestus import hephaestus_bindings as hephaestus
+from preprocessing.multiface import fc_predictor
+from preprocessing.avatars import serialize
+from preprocessing.hephaestus import hephaestus_bindings as hephaestus
 
 def _procrustes(X, Y, scaling=True, reflection='best'):
     """
@@ -140,7 +140,6 @@ def est_id_exp(fmod, points, model_path, idxs, Wbound_Cid=.8, Wbound_Cexp=1.5):
     Bas = np.concatenate((fmod['id_basis'], fmod['exp_basis']), 1)
     eta = 0
     UBcoefs = np.vstack((Wbound_Cid*np.ones((num_id, 1)), Wbound_Cexp*np.ones((num_exp,1))) )
-    #print(UBcoefs.shape, points.shape, Bas.shape)
     coefs = fit_3Dmodel_to_shape(points, fmod['mean'].reshape((-1, 3)).T, Bas, idxs, eta, np.hstack((-UBcoefs,UBcoefs)) )
     return coefs
 
@@ -160,30 +159,24 @@ class NMFCRenderer:
             sampler = pickle.load(f)
         self.idxs = sampler['idxs']
 
-        with open('preprocessing/files/ver1103tri2110.pkl','rb') as f:
-            sampler__ = pickle.load(f)
-        trilist = sampler__['trilist']
-
         with open('preprocessing/files/lsfm_exp_30.dat','rb') as f:
             lsfm = serialize.deserialize_binary_to_morphable_model(f.read())
 
         # load face model data for estimating weights
         num_components = lsfm['components'].shape[0]
-        c_fit = lsfm['components'].T.reshape((-1, 3, num_components))[self.idxs].reshape((-1, num_components))
+        self.c_fit = lsfm['components'].T.reshape((-1, 3, num_components))[self.idxs].reshape((-1, num_components))
         self.m_fit = lsfm['mean_points'].reshape((-1,3))[self.idxs].astype(np.float32)
-        exp_basis = lsfm['components'].astype(np.float32)
+        self.faceID = lsfm['mean_points'].astype(np.float32)
+        self.exp_basis = lsfm['components'].astype(np.float32)
+        self.stds = lsfm['weights']
+
+        self.id_basis = io.loadmat(self.MM_inpath)['fmod']['id_basis'][0][0]
 
         temp = io.loadmat(self.MM_inpath)['fmod']
         self.fmod = {'mean': temp['mean'][0][0], 'faces': temp['faces'][0][0],
                         'id_basis':temp['id_basis'][0][0],
                         'exp_basis': temp['exp_basis'][0][0],
                         'IDlands': (temp['IDlands'][0][0]-1).flatten()}
-
-        # load the id basis of the LSFM model
-        id_basis = io.loadmat(self.MM_inpath)['fmod']['id_basis'][0][0]
-
-        # compute face ID from ID model weights
-        faceID = lsfm['mean_points'].astype(np.float32)
 
         # initialize hephaestus renderer
         self.width = 256     # NMFC width hardcoded
@@ -246,6 +239,37 @@ class NMFCRenderer:
         # Return
         return success, (cam_params, id_params, exp_params, landmarks5)
 
+    def get_expression_and_pose(self, image):
+        # Perform 3D face reconstruction for given frame.
+        handler_ret = self.handler.get(image)
+        if len(handler_ret) == 2:
+            success = True
+            # Face(s) found in frame.
+            landmarks, lands5 = handler_ret[0], handler_ret[1]
+            if len(landmarks) > 1:
+                print('More than one faces were found in image')
+                landmarks, lands5 = landmarks[0:1], lands5[0:1]
+        else:
+            # Face not found in frame.
+            success = False
+            print('Failed to find a face in image')
+            return success, None, None
+        # Perform fitting.
+        pos_lms = landmarks[0][:-68].astype(np.float32)
+        shape = pos_lms.copy() * np.array([1, -1, -1], dtype=np.float32) # landmark mesh is in left-handed system
+
+        P = transform.estimate_affine_matrix_3d23d(shape, self.m_fit).astype(np.float32)
+        position_model_space = np.concatenate((shape, np.ones((shape.shape[0], 1), dtype=np.float32)), axis=1) @ P.T
+        position_model_space -= self.m_fit
+        singular_value_cut_ratio=0.3
+        result = np.linalg.lstsq(self.c_fit, position_model_space.reshape(-1), rcond=singular_value_cut_ratio)
+        weights = result[0]
+        exp_params = weights / self.stds
+        Pinv = transform.estimate_affine_matrix_3d23d(self.m_fit, pos_lms).astype(np.float32)
+        cam_params = transform.P2sRt(Pinv)
+        # Return
+        return success, exp_params, cam_params
+
     def computeNMFCs(self, cam_params, id_params, exp_params):
         nmfcs = []
         # Compute NMFCs from reconstruction parameters of frames.
@@ -274,8 +298,33 @@ class NMFCRenderer:
             data, channels, width, height = hephaestus.render_NMFC(self.model)
             data3D = data.reshape((height, width, channels))
             data3D = data3D[:,:,0:3]
-            nmfcs.append(data3D[..., ::-1])
+            nmfcs.append(data3D[..., ::-1]) # return BGR
         return nmfcs
+
+    def computeNMFC(self, cam_param, id_param, exp_param):
+        # Compute NMFCs from frame. Used for demo.
+        # Get Scale, Rotation, Translation
+        S, R, T = cam_param
+        faceAll = self.faceID + np.matmul(self.id_basis, id_param).ravel() + exp_param.dot(self.exp_basis)
+        # Compute face with pose.
+        T = (T / S).reshape(3,1)
+        posed_face3d = R.dot(faceAll.reshape(-1, 3).T) + T
+        # Use hephaestus to generate the NMFC image.
+        hephaestus.update_positions(self.model, posed_face3d.astype(np.float32).T.ravel())
+        # setup orthographic projection and place the camera
+        viewportWidth = self.width / S
+        viewportHeight = self.height / S
+        # seems the viewport is inverted for Vulkan, handle this by inverting the ortho projection
+        hephaestus.set_orthographics_projection(self.model, viewportWidth * 0.5, -viewportWidth * 0.5,
+                                                -viewportHeight * 0.5, viewportHeight * 0.5, -10, 10)
+        # set the cameara to look at the center of the mesh
+        target = hephaestus.vec4(viewportWidth * 0.5, viewportHeight * 0.5, 0, 1)
+        camera = hephaestus.vec4(viewportWidth * 0.5, viewportHeight * 0.5, -3, 1)
+        hephaestus.set_camera_lookat(self.model, camera, target)
+        data, channels, width, height = hephaestus.render_NMFC(self.model)
+        data3D = data.reshape((height, width, channels))
+        data3D = data3D[:,:,0:3]
+        return data3D # return RGB
 
     def clear(self):
         # clean up

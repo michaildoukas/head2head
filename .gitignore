@@ -12,3 +12,4 @@ models/flownet2_pytorch/*.tar
 preprocessing/models/
 preprocessing/files/
 results/
+demo/
