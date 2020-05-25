@@ -1,6 +1,6 @@
 # Head2Head: Video-based Neural Head Synthesis
 
-[\[Paper\]](link) [\[Video Demo\]](link)
+[\[arXiv\]](https://arxiv.org/abs/2005.10954) [\[Paper\]](link) [\[Video Demo\]](link)
 
 | ![imgs/head2head_demo.gif](imgs/head2head_demo.gif) |
 |:--:|
