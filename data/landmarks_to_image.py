@@ -72,7 +72,7 @@ def create_eyes_image(A_path, size, transform_scale, add_noise, pts=None):
         if keypoints.shape[0] == 70:
             # if all 70 landmarks are available get only 14 for the eyes
             pts0 = keypoints[36:48, :].astype(np.int32) # eyes landmarks from 70 landmarks
-            pts1 = keypoints[68:70, :].astype(np.int32) # eyes landmarks from 70 landmarks
+            pts1 = keypoints[68:70, :].astype(np.int32) # eyes centre landmarks from 70 landmarks
             pts = np.concatenate([pts0, pts1], axis=0)
         else:
             pts = keypoints.astype(np.int32)
@@ -111,3 +111,35 @@ def create_eyes_image(A_path, size, transform_scale, add_noise, pts=None):
     drawCircle(eyes_image, pts[13, 0], pts[13, 1], int(radius_right))
     eyes_image = transform_scale(Image.fromarray(np.uint8(eyes_image)))
     return eyes_image
+
+def create_landmarks_image(A_path, size, transform_scale):
+    w, h = size
+    landmarks_image = np.zeros((h, w, 3), np.int32)
+
+    keypoints = np.loadtxt(A_path, delimiter=' ')
+    if keypoints.shape[0] == 70:
+        pts = keypoints[:68].astype(np.int32) # Get 68 facial landmarks.
+    else:
+        raise(RuntimeError('Not enough facial landmarks found in file.'))
+
+    # Draw
+    face_list = [
+                 [range(0, 17)], # face
+                 [range(17, 22)], # left eyebrow
+                 [range(22, 27)], # right eyebrow
+                 [range(27, 31), range(31, 36)], # nose
+                 [[36,37,38,39], [39,40,41,36]], # left eye
+                 [[42,43,44,45], [45,46,47,42]], # right eye
+                 [range(48, 55), [54,55,56,57,58,59,48]], # mouth exterior
+                 [range(60, 65), [64,65,66,67,60]] # mouth interior
+                ]
+    for edge_list in face_list:
+            for edge in edge_list:
+                for i in range(0, max(1, len(edge)-1)):
+                    sub_edge = edge[i:i+2]
+                    x, y = pts[sub_edge, 0], pts[sub_edge, 1]
+                    curve_x, curve_y = interpPoints(x, y)
+                    drawEdge(landmarks_image, curve_x, curve_y)
+
+    landmarks_image = transform_scale(Image.fromarray(np.uint8(landmarks_image)))
+    return landmarks_image

@@ -5,6 +5,9 @@ def CreateDataset(opt):
     if opt.dataset_mode == 'video':
         from data.video_dataset import videoDataset
         dataset = videoDataset()
+    if opt.dataset_mode == 'landmarks':
+        from data.landmarks_dataset import landmarksDataset
+        dataset = landmarksDataset()
     else:
         raise ValueError('Unrecognized dataset')
     dataset.initialize(opt)
