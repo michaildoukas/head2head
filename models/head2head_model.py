@@ -128,14 +128,16 @@ class Head2HeadModelD(BaseModel):
         return loss_D_T_real, loss_D_T_fake, loss_G_T_GAN, loss_G_T_GAN_Feat
 
     def FM_loss(self, pred_real, pred_fake):
-        loss_G_GAN_Feat = 0
         if not self.opt.no_ganFeat:
+            loss_G_GAN_Feat = 0
             feat_weights = 4.0 / (self.opt.n_layers_D + 1)
             D_weights = 1.0 / self.opt.num_D
             for i in range(min(len(pred_fake), self.opt.num_D)):
                 for j in range(len(pred_fake[i])-1):
                     loss_G_GAN_Feat += D_weights * feat_weights * \
                         self.criterionFeat(pred_fake[i][j], pred_real[i][j].detach()) * self.opt.lambda_feat
+        else:
+            loss_G_GAN_Feat = torch.zeros(1, 1).cuda()
         return loss_G_GAN_Feat
 
     def forward(self, D_T_scale, tensors_list, mouth_centers=None, eyes_centers=None):
@@ -157,7 +159,7 @@ class Head2HeadModelD(BaseModel):
             _, _, self.height, self.width = real_B.size()
             #################### Losses ####################
             # VGG loss
-            loss_G_VGG = (self.criterionVGG(fake_B, real_B) * lambda_feat) if not self.opt.no_vgg else torch.zeros_like(loss_W)
+            loss_G_VGG = (self.criterionVGG(fake_B, real_B) * lambda_feat) if not self.opt.no_vgg else torch.zeros(1, 1).cuda()
             # GAN loss for Generator
             loss_D_real, loss_D_fake, loss_G_GAN, loss_G_GAN_Feat = self.compute_D_losses(self.netD, real_A, real_B, fake_B)
             # mWarp loss
