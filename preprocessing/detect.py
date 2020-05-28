@@ -103,6 +103,10 @@ def read_mp4(mp4_path, args):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         images.append(image)
     reader.release()
+    if args.n_replicate_first > 0:
+        pad = [images[0]] * args.n_replicate_first
+        pad.extend(images)
+        images = pad
     return images, fps
 
 def check_boxes(boxes, img_size, args):
@@ -218,6 +222,7 @@ def main():
     parser.add_argument('--train_seq_length', default=50, type=int, help='The number of frames for each training sub-sequence.')
     parser.add_argument('--test_seq_ratio', default=0.33, type=int, help='The ratio of frames left for test (self-reenactment)')
     parser.add_argument('--split', default='train', choices=['train', 'test'], type=str, help='The split for data [train|test]')
+    parser.add_argument('--n_replicate_first', default=0, type=int, help='How many times to replicate and append the first frame to the beginning of the video.')
 
     args = parser.parse_args()
     print_args(parser, args)
