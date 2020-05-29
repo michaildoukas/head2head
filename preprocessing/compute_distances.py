@@ -75,9 +75,16 @@ def compute_average_expesion_distance(expr_list1, expr_list2):
     return np.mean([l1_dist(expr1, expr2) \
             for expr1, expr2 in zip(expr_list1, expr_list2)])
 
+def compute_average_rotation_distance(cam_list1, cam_list2):
+    rotation_list1 = [cam[1] for cam in cam_list1]
+    rotation_list2 = [cam[1] for cam in cam_list2]
+    return np.mean([l1_dist(rot1, rot2) \
+            for rot1, rot2 in zip(rotation_list1, rotation_list2)])
+
 def main():
-    print('Compute L1 distance between average identity coeffs (DAI-L1)\n')
-    print('Compute average L1 distance between expression coeffs (AED-L1)\n')
+    print('Computation of L1 distance between average identity coeffs (DAI-L1)\n')
+    print('Computation of average L1 distance between expression coeffs (AED-L1)\n')
+    print('Computation of average L1 distance between rotation parameters (ARD-L1)\n')
     parser = argparse.ArgumentParser()
     parser.add_argument('--results_dir', type=str, default='results/head2head_obama/latest_epoch/videos_test/obama',
                         help='Path to the results directory.')
@@ -106,12 +113,14 @@ def main():
     # Iterate through the images_dict
     identities_dict = {}
     expressions_dict = {}
+    camera_dict = {}
     for name, image_pths in images_dict.items():
         if paths_exist(image_pths):
             success, reconstruction_output = renderer.reconstruct(image_pths)
             if success:
                 identities_dict[name] = reconstruction_output[1]
                 expressions_dict[name] = reconstruction_output[2]
+                camera_dict[name] = reconstruction_output[0]
             else:
                 print('Reconstruction on %s failed.' % name)
                 break
@@ -131,6 +140,11 @@ def main():
                                                    expressions_dict['fake'])
         # Average Expression Distance (AED-L1)
         print('Average expression (L1) distance between real and fake sequences (AED-L1): %0.4f' % (aed_L1))
+        # Pose
+        ard_L1 = compute_average_rotation_distance(camera_dict['real'],
+                                                   camera_dict['fake'])
+        # Average Rotation Parameters Distance (ARD-L1)
+        print('Average rotation (L1) distance between real and fake sequences (ARD-L1): %0.4f' % (ard_L1))
 
     # Clean
     renderer.clear()
