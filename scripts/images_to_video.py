@@ -69,7 +69,8 @@ def main():
     parser.add_argument('--output_mode', type=str,
                         choices=['only_fake', 'source_target',
                                  'source_nmfc_target', 'heatmap',
-                                 'masked_heatmap', 'all_heatmaps', 'all'],
+                                 'masked_heatmap', 'all_heatmaps', 'all',
+                                 'source_target_separate',],
                         default='all',
                         help='What images to save in the video file.')
     args = parser.parse_args()
@@ -103,7 +104,7 @@ def main():
         assert masked_heatmap_video.shape[0] == nmfc_video.shape[0], 'Not correct number of image files.'
     if args.output_mode == 'only_fake':
         video_list = [fake_video]
-    elif args.output_mode == 'source_target':
+    elif args.output_mode == 'source_target' or args.output_mode == 'source_target_separate':
         video_list = [rgb_video, fake_video]
     elif args.output_mode == 'source_nmfc_target':
         if eye_gaze_video is not None:
@@ -121,8 +122,13 @@ def main():
             video_list = [rgb_video, nmfc_video, eye_gaze_video, fake_video, heatmap_video, masked_heatmap_video]
         else:
             video_list = [rgb_video, nmfc_video, fake_video, heatmap_video, masked_heatmap_video]
-    final_video = np.concatenate(video_list, axis=2)
-    write_video_to_file(save_path, final_video)
+    # write
+    if args.output_mode == 'source_target_separate':
+        write_video_to_file(save_path[:-4] + '_source' + '.mp4', video_list[0])
+        write_video_to_file(save_path[:-4] + '_target' + '.mp4', video_list[1])
+    else:
+        final_video = np.concatenate(video_list, axis=2)
+        write_video_to_file(save_path, final_video)
 
 if __name__=='__main__':
     main()

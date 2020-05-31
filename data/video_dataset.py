@@ -21,7 +21,7 @@ class videoDataset(BaseDataset):
         self.dir_rgb_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'images')
         self.rgb_video_paths = make_video_dataset(self.dir_rgb_video, opt.target_name, source_name, opt.max_n_sequences)
         assert_valid_pairs(self.nmfc_video_paths, self.rgb_video_paths)
-        if not opt.no_eye_gaze or (self.opt.use_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
+        if not opt.no_eye_gaze or (not self.opt.no_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
             self.dir_landmark_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'landmarks70')
             self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name, source_name, opt.max_n_sequences)
             assert_valid_pairs(self.landmark_video_paths, self.rgb_video_paths)
@@ -36,7 +36,7 @@ class videoDataset(BaseDataset):
         nmfc_video_paths = self.nmfc_video_paths[seq_idx]
         nmfc_len = len(nmfc_video_paths)
         rgb_video_paths = self.rgb_video_paths[seq_idx]
-        if not self.opt.no_eye_gaze or (self.opt.use_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
+        if not self.opt.no_eye_gaze or (not self.opt.no_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
             landmark_video_paths = self.landmark_video_paths[seq_idx]
 
         # Get parameters and transforms.
@@ -68,7 +68,7 @@ class videoDataset(BaseDataset):
                                                 transform_scale_eye_gaze_video,
                                                 add_noise=self.opt.isTrain)
                 eye_video = eye_video_i if i == 0 else torch.cat([eye_video, eye_video_i], dim=0)
-            if self.opt.use_mouth_D and self.opt.isTrain:
+            if not self.opt.no_mouth_D and self.opt.isTrain:
                 landmark_video_path = landmark_video_paths[start_idx + i]
                 mouth_centers_i = self.get_mouth_center(landmark_video_path)
                 mouth_centers = mouth_centers_i if i == 0 else torch.cat([mouth_centers, mouth_centers_i], dim=0)

@@ -35,7 +35,7 @@ class Head2HeadModelD(BaseModel):
                                       opt.num_D, not opt.no_ganFeat, gpu_ids=self.gpu_ids, opt=opt)
 
         # Mouth, Eyes discriminator
-        if opt.use_mouth_D:
+        if not opt.no_mouth_D:
              self.netDm = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm,
                                             opt.num_D, not opt.no_ganFeat, gpu_ids=self.gpu_ids, opt=opt)
         if opt.use_eyes_D:
@@ -51,7 +51,7 @@ class Head2HeadModelD(BaseModel):
         # load networks
         if (opt.continue_train or opt.load_pretrain):
             self.load_network(self.netD, 'D', opt.which_epoch, opt.load_pretrain)
-            if opt.use_mouth_D:
+            if not opt.no_mouth_D:
                 self.load_network(self.netDm, 'Dm', opt.which_epoch, opt.load_pretrain)
             if opt.use_eyes_D:
                 self.load_network(self.netDe, 'De', opt.which_epoch, opt.load_pretrain)
@@ -72,7 +72,7 @@ class Head2HeadModelD(BaseModel):
 
         self.loss_names = ['G_VGG', 'G_GAN', 'G_GAN_Feat', 'D_real', 'D_fake', 'G_Warp']
         self.loss_names_T = ['G_T_GAN', 'G_T_GAN_Feat', 'D_T_real', 'D_T_fake']
-        if opt.use_mouth_D:
+        if not opt.no_mouth_D:
             self.loss_names += ['Gm_GAN', 'Gm_GAN_Feat', 'Dm_real', 'Dm_fake']
         if opt.use_eyes_D:
             self.loss_names += ['Ge_GAN', 'Ge_GAN_Feat', 'De_real', 'De_fake']
@@ -81,7 +81,7 @@ class Head2HeadModelD(BaseModel):
         lr = opt.lr
         # initialize optimizers
         params = list(self.netD.parameters())
-        if opt.use_mouth_D:
+        if not opt.no_mouth_D:
             params += list(self.netDm.parameters())
         if opt.use_eyes_D:
             params += list(self.netDe.parameters())
@@ -168,7 +168,7 @@ class Head2HeadModelD(BaseModel):
 
             loss_list = [loss_G_VGG, loss_G_GAN, loss_G_GAN_Feat, loss_D_real, loss_D_fake, loss_G_Warp]
 
-            if self.opt.use_mouth_D:
+            if not self.opt.no_mouth_D:
                 # Extract mouth region around the center.
                 real_A_mouth, real_B_mouth, fake_B_mouth = util.get_ROI([real_A, real_B, fake_B], mouth_centers, self.opt)
                 # Losses for mouth discriminator
@@ -192,7 +192,7 @@ class Head2HeadModelD(BaseModel):
 
     def save(self, label):
         self.save_network(self.netD, 'D', label, self.gpu_ids)
-        if self.opt.use_mouth_D:
+        if not self.opt.no_mouth_D:
             self.save_network(self.netDm, 'Dm', label, self.gpu_ids)
         if self.opt.use_eyes_D:
             self.save_network(self.netDe, 'De', label, self.gpu_ids)

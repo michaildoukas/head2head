@@ -70,7 +70,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
             nmfc_video = Variable(data['nmfc_video'][:, i*3:(i+t_len)*3, ...]).view(-1, t_len, 3, height, width) # nmfc_video have 3 channels
             input_A = nmfc_video
             input_B = Variable(data['rgb_video'][:, i*3:(i+t_len)*3, ...]).view(-1, t_len, 3, height, width) # rgb_video has 3 channels
-            mouth_centers = Variable(data['mouth_centers'][:, i:i+t_len, ...]).view(-1, t_len, 2) if opt.use_mouth_D else None
+            mouth_centers = Variable(data['mouth_centers'][:, i:i+t_len, ...]).view(-1, t_len, 2) if not opt.no_mouth_D else None
             eyes_centers = Variable(data['eyes_centers'][:, i:i+t_len, ...]).view(-1, t_len, 2) if opt.use_eyes_D else None
 
             if not opt.no_eye_gaze:
@@ -115,7 +115,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
             # Losses
             loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) * 0.5
             loss_G = loss_dict['G_GAN'] + loss_dict['G_GAN_Feat'] + loss_dict['G_VGG'] + loss_dict['G_Warp']
-            if opt.use_mouth_D:
+            if not opt.no_mouth_D:
                 loss_G += loss_dict['Gm_GAN'] + loss_dict['Gm_GAN_Feat']
                 loss_D += (loss_dict['Dm_fake'] + loss_dict['Dm_real']) * 0.5
             if opt.use_eyes_D:
@@ -166,7 +166,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
                            ('conf_ref', util.tensor2im(conf_ref[0, -1], normalize=False))]
             if not opt.no_eye_gaze:
                 visual_dict += [('input_eye_gaze_image', util.tensor2im(eye_gaze_video[0, -1], normalize=False))]
-            if opt.use_mouth_D:
+            if not opt.no_mouth_D:
                 mc = util.fit_ROI_in_frame(mouth_centers[-1], opt)
                 fake_B_mouth = util.tensor2im(util.crop_ROI(fake_B[0, -1], mc, opt.ROI_size))
                 visual_dict += [('fake_image_mouth', fake_B_mouth)]

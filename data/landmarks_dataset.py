@@ -56,7 +56,7 @@ class landmarksDataset(BaseDataset):
             rgb_video_i = self.get_image(rgb_video_path, transform_scale_rgb_video)
             rgb_video = rgb_video_i if i == 0 else torch.cat([rgb_video, rgb_video_i], dim=0)
             A_paths.append(landmarks_video_path)
-            if self.opt.use_mouth_D and self.opt.isTrain:
+            if not self.opt.no_mouth_D and self.opt.isTrain:
                 landmarks_video_path = landmarks_video_paths[start_idx + i]
                 mouth_centers_i = self.get_mouth_center(landmarks_video_path)
                 mouth_centers = mouth_centers_i if i == 0 else torch.cat([mouth_centers, mouth_centers_i], dim=0)
