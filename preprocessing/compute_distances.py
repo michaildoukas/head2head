@@ -6,7 +6,7 @@ import collections
 import torch
 import itertools
 from tqdm import tqdm
-
+from preprocessing import transform
 from reconstruction import NMFCRenderer
 
 IMG_EXTENSIONS = ['.png']
@@ -52,6 +52,9 @@ def print_args(parser, args):
 def l1_dist(v1, v2):
     return np.abs(v1 - v2).sum()
 
+def euler_dist(e1, e2):
+    return (abs(e1[0]-e2[0]) + abs(e1[1]-e2[1]) + abs(e1[2]-e2[2])) / 3
+
 def get_within_distances(lst):
     pairs = itertools.combinations(lst, 2)
     max = 0
@@ -76,10 +79,11 @@ def compute_average_expesion_distance(expr_list1, expr_list2):
             for expr1, expr2 in zip(expr_list1, expr_list2)])
 
 def compute_average_rotation_distance(cam_list1, cam_list2):
-    rotation_list1 = [cam[1] for cam in cam_list1]
-    rotation_list2 = [cam[1] for cam in cam_list2]
-    return np.mean([l1_dist(rot1, rot2) \
-            for rot1, rot2 in zip(rotation_list1, rotation_list2)])
+    # Rotation parameters to Euler angles.
+    angles_list1 = [transform.matrix2angle(cam[1]) for cam in cam_list1]
+    angles_list2 = [transform.matrix2angle(cam[1]) for cam in cam_list2]
+    return np.mean([euler_dist(ang1, ang2) \
+            for ang1, ang2 in zip(angles_list1, angles_list2)])
 
 def main():
     print('Computation of L1 distance between average identity coeffs (DAI-L1)\n')

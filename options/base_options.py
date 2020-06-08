@@ -12,7 +12,7 @@ class BaseOptions():
         self.parser.add_argument('--max_n_sequences', type=int, default=None, help='Maximum number of sub-sequences to use.')
         self.parser.add_argument('--no_augment_input', action='store_true', help='if true, do not perform input data augmentation.')
         self.parser.add_argument('--ROI_size', type=int, default=72, help='spatial dimension size of ROI.')
-        self.parser.add_argument('--no_mouth_D', action='store_true', default=True, help='if true, do not use mouth discriminator')
+        self.parser.add_argument('--no_mouth_D', action='store_true', help='if true, do not use mouth discriminator')
         self.parser.add_argument('--use_eyes_D', action='store_true', help='if true, Use eyes discriminator')
         self.parser.add_argument('--no_eye_gaze', action='store_true', help='if true, the model does not condition synthesis on eye gaze images')
         self.parser.add_argument('--use_faceflow', action='store_true', default=True, help='if true, Use fine-tuned flow on faces.')

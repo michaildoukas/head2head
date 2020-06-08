@@ -158,6 +158,7 @@ def search_eye_centres(nmfcs, prev_arg_mins=None):
                         min_dst = dst
                         arg_min = np.array([i, j])
             centres.append(np.flip(arg_min)) # flip, since landmarks are width, heigth
+            prev_arg_min = arg_min
         arg_mins.append(arg_min)
         ret.append(centres)
     return ret, arg_mins

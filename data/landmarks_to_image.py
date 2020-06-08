@@ -80,6 +80,13 @@ def create_eyes_image(A_path, size, transform_scale, add_noise, pts=None):
     left_eye_pts = np.concatenate([pts[0:6, :], pts[12:13, :]], axis=0)
     right_eye_pts = np.concatenate([pts[6:12, :], pts[13:14, :]], axis=0)
 
+    #left_eye_pts[1:3,1] += 1 # dvp video.
+    #left_eye_pts[6,1] += 1 # dvp video.
+    #left_eye_pts[0,0] -= 1 # dvp video.
+    #left_eye_pts[3,0] += 1 # dvp video.
+    #right_eye_pts[0,0] -= 1 # dvp video.
+    #right_eye_pts[3,0] += 1 # dvp video.
+
     if add_noise:
         scale_noise = 2 * np.random.randn(1)
         scale = 1 + scale_noise[0] / 100
