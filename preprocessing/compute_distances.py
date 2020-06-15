@@ -53,7 +53,16 @@ def l1_dist(v1, v2):
     return np.abs(v1 - v2).sum()
 
 def euler_dist(e1, e2):
-    return (abs(e1[0]-e2[0]) + abs(e1[1]-e2[1]) + abs(e1[2]-e2[2])) / 3
+    d0 = abs(e1[0]-e2[0])
+    if d0 > 180:
+        d0 = 360 - d0
+    d1 = abs(e1[1]-e2[1])
+    if d1 > 180:
+        d1 = 360 - d1
+    d2 = abs(e1[2]-e2[2])
+    if d2 > 180:
+        d2 = 360 - d2
+    return (d0 + d1 + d2) / 3
 
 def get_within_distances(lst):
     pairs = itertools.combinations(lst, 2)
