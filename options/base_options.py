@@ -59,7 +59,7 @@ class BaseOptions():
         #    if id >= 0:
         #        self.opt.gpu_ids.append(id)
         os.environ["CUDA_VISIBLE_DEVICES"] = self.opt.gpu_ids
-        self.opt.gpu_ids = [i for i in range(len(self.opt.gpu_ids))]
+        self.opt.gpu_ids = [i for i in range(len(self.opt.gpu_ids)-1)]
 
         # set gpu ids
         if len(self.opt.gpu_ids) > 0:

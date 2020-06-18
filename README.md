@@ -1,6 +1,6 @@
-# Head2Head: Video-based Neural Head Synthesis
+# Head2Head: Video-based Neural Head Synthesis & Head2Head++: Deep Facial Attributes Re-Targeting
 
-[\[arXiv\]](https://arxiv.org/abs/2005.10954) [\[Paper\]](link) [\[Video Demo\]](link)
+[\[Head2Head arXiv\]](https://arxiv.org/abs/2005.10954) [\[Head2Head FG Paper\]](https://www.computer.org/csdl/pds/api/csdl/proceedings/download-article/1kecI9gYxLq/pdf?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjc2RsX2FwaSIsImF1ZCI6ImNzZGxfYXBpX2Rvd25sb2FkX3Rva2VuIiwic3ViIjoiYW5vbnltb3VzQGNvbXB1dGVyLm9yZyIsImVtYWlsIjoiYW5vbnltb3VzQGNvbXB1dGVyLm9yZyIsImV4cCI6MTU5MjQ5MDY0OX0.XzeX92_c4A6KDP3jw7ki8WsZGwZTqs29KwR2xBoPOvw) [\[Head2Head++ Video Demo\]](https://www.dropbox.com/s/wmfspomsmnc5saw/head2headpp_supplementary_video2.mp4)
 
 | ![imgs/head2head_demo.gif](imgs/head2head_demo.gif) |
 |:--:|
@@ -220,4 +220,26 @@ Train head2head on this multi-person dataset:
 Finally, fine-tune on ```<target_name>``` from ```<dataset_name>```:
 ```bash
 ./scripts/train/finetune_on_target.sh <target_name> <dataset_name>
+```
+
+# Citation
+
+If you use this code, please cite our paper.
+
+```
+@INPROCEEDINGS {,
+author = {M. Koujan and M. Doukas and A. Roussos and S. Zafeiriou},
+booktitle = {2020 15th IEEE International Conference on Automatic Face and Gesture Recognition (FG 2020) (FG)},
+title = {Head2Head: Video-Based Neural Head Synthesis},
+year = {2020},
+volume = {},
+issn = {},
+pages = {319-326},
+keywords = {},
+doi = {10.1109/FG47880.2020.00048},
+url = {https://doi.ieeecomputersociety.org/10.1109/FG47880.2020.00048},
+publisher = {IEEE Computer Society},
+address = {Los Alamitos, CA, USA},
+month = {may}
+}
 ```

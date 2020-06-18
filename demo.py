@@ -152,7 +152,7 @@ def main():
     opt.batchSize = 1
     opt.serial_batches = True
     # GPU id to be used for mxnet/reconstructor
-    opt.gpu_id = opt.gpu_ids[0]
+    opt.gpu_id = opt.gpu_ids[-1]
     # Device to be used for MTCNN face detector
     detector_device = 'cpu'
     # Face bounding box margin
@@ -192,7 +192,7 @@ def main():
 
     # Setup camera capturing
     window_name = 'Hea2Head Demo'
-    video_capture = cv2.VideoCapture('datasets/head2headDataset/original_videos/Putin.mp4')
+    video_capture = cv2.VideoCapture('datasets/head2headDatasetv2/original_videos/tusk_0.mp4') # Set to 0 for camera demo.
     video_capture.set(cv2.CAP_PROP_BUFFERSIZE, 2) # set double buffer for capture
     fps = video_capture.get(cv2.CAP_PROP_FPS)
     print("Video capture at {} fps.".format(fps))
