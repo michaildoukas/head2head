@@ -227,7 +227,7 @@ Finally, fine-tune on ```<target_name>``` from ```<dataset_name>```:
 If you use this code, please cite our paper.
 
 ```
-@INPROCEEDINGS {,
+@INPROCEEDINGS {head2head2020,
 author = {M. Koujan and M. Doukas and A. Roussos and S. Zafeiriou},
 booktitle = {2020 15th IEEE International Conference on Automatic Face and Gesture Recognition (FG 2020) (FG)},
 title = {Head2Head: Video-Based Neural Head Synthesis},
