@@ -96,8 +96,8 @@ def create_eyes_image(A_path, size, transform_scale, add_noise, pts=None):
         right_eye_pts = (right_eye_pts - right_eye_mean) * scale + right_eye_mean
         # add noise to eyes distance (x dimension)
         d_noise = 2 * np.random.randn(2)
-        left_eye_pts += d_noise[0]
-        right_eye_pts -= d_noise[1]
+        left_eye_pts[:, 0] += d_noise[0]
+        right_eye_pts[:, 0] -= d_noise[1]
 
     pts = np.concatenate([left_eye_pts, right_eye_pts], axis=0).astype(np.int32)
 

@@ -5,7 +5,8 @@ epoch=latest # hardcoded
 
 python preprocessing/reenact.py --dataset_name $dataset_name \
                                 --source_id $source_name \
-                                --target_id $target_name
+                                --target_id $target_name \
+                                --split_s train
 
 python test.py --checkpoints_dir checkpoints/$dataset_name \
                --results_dir results/$dataset_name \
@@ -19,4 +20,4 @@ python test.py --checkpoints_dir checkpoints/$dataset_name \
 
 results_dir=results/$dataset_name/head2head_finetuned_${target_name}/${epoch}_epoch/test/${target_name}_${source_name}
 
-python scripts/images_to_video.py --results_dir $results_dir --output_mode source_nmfc_target
+python scripts/images_to_video.py --results_dir $results_dir --output_mode source_target_separate

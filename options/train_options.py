@@ -11,7 +11,7 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
         self.parser.add_argument('--phase', type=str, default='train', help='train, val, test, etc')
         self.parser.add_argument('--which_epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
-        self.parser.add_argument('--niter', type=int, default=20, help='# of iter at starting learning rate')
+        self.parser.add_argument('--niter', type=int, default=40, help='# of iter at starting learning rate')
         self.parser.add_argument('--niter_decay', type=int, default=20, help='# of iter to linearly decay learning rate to zero')
         self.parser.add_argument('--beta1', type=float, default=0.5, help='momentum term of adam')
         self.parser.add_argument('--lr', type=float, default=0.0002, help='initial learning rate for adam')

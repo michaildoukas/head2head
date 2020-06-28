@@ -1,14 +1,30 @@
-# Head2Head: Video-based Neural Head Synthesis & Head2Head++: Deep Facial Attributes Re-Targeting
+## Head2Head: Video-based Neural Head Synthesis & Head2Head++: Deep Facial Attributes Re-Targeting
 
-[\[Head2Head arXiv\]](https://arxiv.org/abs/2005.10954) [\[Head2Head FG Paper\]](https://www.computer.org/csdl/pds/api/csdl/proceedings/download-article/1kecI9gYxLq/pdf?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjc2RsX2FwaSIsImF1ZCI6ImNzZGxfYXBpX2Rvd25sb2FkX3Rva2VuIiwic3ViIjoiYW5vbnltb3VzQGNvbXB1dGVyLm9yZyIsImVtYWlsIjoiYW5vbnltb3VzQGNvbXB1dGVyLm9yZyIsImV4cCI6MTU5MjQ5MDY0OX0.XzeX92_c4A6KDP3jw7ki8WsZGwZTqs29KwR2xBoPOvw) [\[Head2Head++ Video Demo\]](https://www.dropbox.com/s/wmfspomsmnc5saw/head2headpp_supplementary_video2.mp4)
+PyTorch implementation for Head2Head and Head2Head++. It can be used to fully transfer the head pose, facial expression and eye movements from a source video to a target identity.
 
-| ![imgs/head2head_demo.gif](imgs/head2head_demo.gif) |
-|:--:|
-| *Transferring head pose, facial expressions and eye gaze from a source video to a target identity* |
+![imgs/head2head_demo.gif](imgs/head2head_demo.gif)
+
+> **Head2Head: Video-based Neural Head Synthesis**<br>
+> [Mohammad Rami Koujan]()\*, [Michail Christos Doukas]()\*, [Anastasios Roussos](), [Stefanos Zafeiriou]()<br>
+> In 15th IEEE International Conference on Automatic Face and Gesture Recognition (FG 2020)<br>
+> (* equal contribution)<br>
+>
+> Paper: https://arxiv.org/abs/2005.10954<br>
+
+> **Head2Head++: Deep Facial Attributes Re-Targeting**<br>
+>  [Michail Christos Doukas]()\*, [Mohammad Rami Koujan]()\*, [Anastasios Roussos](), [Viktoriia Sharmanska]() [Stefanos Zafeiriou]()<br>
+> Submitted to the IEEE Transactions on Biometrics, Behavior, and Identity Science (TBIOM) journal.<br>
+> (* equal contribution)<br>
+>
+> Paper: https://arxiv.org/abs/2006.10199<br>
+> Video Demo: https://www.dropbox.com/s/wmfspomsmnc5saw/head2headpp_supplementary_video2.mp4<br>
+
+
+## Reenactment Examples
 
 | ![imgs/face_reenactment_demo.gif](imgs/face_reenactment_demo.gif) | ![imgs/head_reenactment_demo.gif](imgs/head_reenactment_demo.gif) |
 |:--:|:--:|
-| *Simple face reenactment (facial expression transfer)* | *Complete head reenactment (pose, expression, eyes transfer)* |
+| *Simple face reenactment (facial expression transfer)* | *Full head reenactment (pose, expression, eyes transfer)* |
 
 ## Installation
 
@@ -74,7 +90,7 @@ python scripts/download_files.py
 
 #### Video data visualisation after face detection and cropping
 
-We have trained and tested Head2Head on the seven target identities shown below:
+We have trained and tested Head2Head on the seven target identities (Turnbull, Obama, Putin, Merkel, Trudeau, Biden, May) shown below:
 
 ![](imgs/head2headDataset_identities.png)
 
@@ -111,7 +127,7 @@ head2headDataset ----- original_videos
                                              --- nmfcs (GAN conditional input)
 ```
 
-#### Head2Head Dataset version 2
+#### Head2Head++ Dataset
 
 ![](imgs/head2headDatasetv2_identities.png)
 
@@ -123,7 +139,7 @@ python scripts/download_dataset.py --dataset head2headDatasetv2
 
 ## Create your Dataset
 
-You can create your own dataset from .mp4 video files. For that, first we do **face detection**, which returns a fixed bounding box that is used to extract the ROI, around the face. Then, we perform **3D face reconstruction** and compute the NMFC images, one for each frame of the video.
+You can create your own dataset from .mp4 video files. For that, first we do **face detection**, which returns a fixed bounding box that is used to extract the ROI, around the face. Then, we perform **3D face reconstruction** and compute the NMFC images, one for each frame of the video. Finally, we run **facial landmark localisation** to get the eye movements.
 
 #### Face detection (tracking)
 
@@ -139,21 +155,21 @@ python preprocessing/detect.py --original_videos_path <videos_path> --dataset_na
 
 - ```<split>``` is the data split to place the file(s). If set to ```train```, the videos-identities can be used as target, but the last one third of the frames is placed in the test set, enabling self reenactment experiments. When set to ```test```, the videos-identities can be used only as source and no frames are placed in the training set. (default: ```train```)
 
-#### 68 + 2 facial landmarks detection
-
-```bash
-python preprocessing/detect_landmarks70.py --dataset_name <dataset_name>
-```
-
 #### 3D face reconstruction
 
-To perform 3D facial reconstruction and compute the NMFC images of all videos-identities in the dataset, run:
+To perform 3D facial reconstruction and compute the NMFC images of all videos/identities in the dataset, run:
 
 ```bash
 python preprocessing/reconstruct.py --dataset_name <dataset_name>
 ```
 
-Please execute the two commands above (landmark detection and face reconstruction) each time you use the face detection script to add new identities in the ```<dataset_name>``` dataset.
+To extract facial landmarks (and eye pupils), run:
+
+```bash
+python preprocessing/detect_landmarks70.py --dataset_name <dataset_name>
+```
+
+Execute the commands above each time you use the face detection script to add new identity to ```<dataset_name>``` dataset.
 
 ## Train a head2head model
 
@@ -197,7 +213,11 @@ For a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_nam
 
 ## Real-time reenactment
 
-TODO
+Nearly real-time demo using your camera:
+
+```bash
+./scripts/demo/run_demo_on_target.sh <target_name> <dataset_name>
+```
 
 ## Pre-training on FaceForensic++ Dataset
 
@@ -205,12 +225,6 @@ In order to increase the generative performance of head2head in very short targe
 
 ```bash
 python scripts/download_dataset.py --dataset faceforensicspp
-```
-
-Compute 68 + 2 landmarks, as they are not included in the downloaded files:
-
-```bash
-python preprocessing/detect_landmarks70.py --dataset_name faceforensicspp
 ```
 
 Train head2head on this multi-person dataset:
@@ -222,9 +236,9 @@ Finally, fine-tune on ```<target_name>``` from ```<dataset_name>```:
 ./scripts/train/finetune_on_target.sh <target_name> <dataset_name>
 ```
 
-# Citation
+## Citation
 
-If you use this code, please cite our paper.
+If you use this code, please cite our Head2Head paper.
 
 ```
 @INPROCEEDINGS {head2head2020,
@@ -243,3 +257,10 @@ address = {Los Alamitos, CA, USA},
 month = {may}
 }
 ```
+
+## License
+
+TODO
+
+## Acknowledgments
+ This code borrows heavily from [pix2pixHD](https://github.com/NVIDIA/pix2pixHD) and [vid2vid](https://github.com/NVIDIA/vid2vid).

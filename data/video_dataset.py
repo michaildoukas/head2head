@@ -45,7 +45,7 @@ class videoDataset(BaseDataset):
         params = get_params(self.opt, first_nmfc_image.size)
         transform_scale_nmfc_video = get_transform(self.opt, params, normalize=False,
             augment=not self.opt.no_augment_input and self.opt.isTrain) # do not normalize nmfc but augment.
-        transform_scale_eye_gaze_video = get_transform(self.opt, params, normalize=False) # do not normalize eye_gaze.
+        transform_scale_eye_gaze_video = transform_scale_nmfc_video #get_transform(self.opt, params, normalize=False) # do not normalize eye_gaze.
         transform_scale_rgb_video = get_transform(self.opt, params)
         change_seq = False if self.opt.isTrain else self.change_seq
 

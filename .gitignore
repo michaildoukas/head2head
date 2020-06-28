@@ -8,7 +8,6 @@ datasets/head2headDataset/original_videos
 datasets/head2headDatasetv2/dataset
 datasets/head2headDatasetv2/original_videos
 datasets/faceforensicspp/
-datasets/spiros/
 datasets/dvp/
 models/flownet2_pytorch/*.tar
 preprocessing/models/

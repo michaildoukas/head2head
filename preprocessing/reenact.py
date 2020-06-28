@@ -70,14 +70,12 @@ def compute_cam_params(s_cam_params, t_cam_params, args):
         if not args.no_translation_adaptation:
             mean_nT_target = np.mean(nT_target, axis=0)
             mean_nT_source = np.mean(nT_source, axis=0)
-            if args.standardize:
-                std_nT_target = np.std(nT_target, axis=0)
-                std_nT_source = np.std(nT_source, axis=0)
-                nT = [(t - mean_nT_source) * std_nT_target / std_nT_source \
-                     + mean_nT_target for t in nT_source]
-            else:
-                nT = [t - mean_nT_source + mean_nT_target
-                      for t in nT_source]
+            std_nT_target = np.std(nT_target, axis=0)
+            # Allow camera translation two standard deviation away from the one on target video.
+            upper_limit = mean_nT_target + std_nT_target * 2
+            lower_limit = mean_nT_target - std_nT_target * 2
+            nT = [np.maximum(np.minimum(t - mean_nT_source + mean_nT_target,
+                             upper_limit), lower_limit) for t in nT_source]
             # Smoothen translation
             nT = smoothen_signal(nT)
             cam_params = [(s, params[1], s * t) \
@@ -256,8 +254,6 @@ def main():
                               using statistics from target video.')
     parser.add_argument('--keep_target_pose', action='store_true',
                         help='Use the poses from target video.')
-    parser.add_argument('--standardize', action='store_true',
-                        help='Perform adaptation using also std from videos.')
     parser.add_argument('--no_eye_gaze', action='store_true',
                         help='.')
     parser.add_argument('--gpu_id', type=int,
