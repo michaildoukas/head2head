@@ -1,4 +1,4 @@
-## Head2Head: Video-based Neural Head Synthesis & <br />  Head2Head++: Deep Facial Attributes Re-Targeting
+## Head2Head: Video-based Neural Head Synthesis & Head2Head++: Deep Facial Attributes Re-Targeting
 
 PyTorch implementation for Head2Head and Head2Head++. It can be used to fully transfer the head pose, facial expression and eye movements from a source video to a target identity.
 
@@ -10,6 +10,7 @@ PyTorch implementation for Head2Head and Head2Head++. It can be used to fully tr
 > (* equal contribution)<br>
 >
 > Paper: https://arxiv.org/abs/2005.10954<br>
+> Video Demo: https://youtu.be/RCvVMF5cVeY<br>
 
 > **Head2Head++: Deep Facial Attributes Re-Targeting**<br>
 >  [Michail Christos Doukas]()\*, [Mohammad Rami Koujan]()\*, [Anastasios Roussos](), [Viktoriia Sharmanska]() [Stefanos Zafeiriou]()<br>
@@ -17,7 +18,7 @@ PyTorch implementation for Head2Head and Head2Head++. It can be used to fully tr
 > (* equal contribution)<br>
 >
 > Paper: https://arxiv.org/abs/2006.10199<br>
-> Video Demo: https://www.dropbox.com/s/wmfspomsmnc5saw/head2headpp_supplementary_video2.mp4<br>
+> Video Demo: https://youtu.be/BhpRjjCcmJE<br>
 
 
 ## Reenactment Examples
@@ -261,9 +262,5 @@ month = {may}
 }
 ```
 
-## License
-
-TODO
-
-## Acknowledgments
- This code borrows heavily from [pix2pixHD](https://github.com/NVIDIA/pix2pixHD) and [vid2vid](https://github.com/NVIDIA/vid2vid).
+### Additional notes
+This code borrows from [pix2pixHD](https://github.com/NVIDIA/pix2pixHD) and [vid2vid](https://github.com/NVIDIA/vid2vid).
