@@ -2,7 +2,7 @@
 
 PyTorch implementation for Head2Head and Head2Head++. It can be used to fully transfer the head pose, facial expression and eye movements from a source video to a target identity.
 
-![imgs/head2head_demo.gif](imgs/head2head_demo.gif)
+![imgs/head2head.gif](imgs/head2head.gif)
 
 > **Head2Head: Video-based Neural Head Synthesis**<br>
 > [Mohammad Rami Koujan]()\*, [Michail Christos Doukas]()\*, [Anastasios Roussos](), [Stefanos Zafeiriou]()<br>
@@ -211,7 +211,7 @@ For a ```<source_name>``` and a ```<target_name>``` from dataset ```<dataset_nam
 ./scripts/test/test_face_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
 ```
 
-## Real-time reenactment
+## Reenactment demo
 
 Nearly real-time demo using your camera:
 
