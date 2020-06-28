@@ -1,4 +1,4 @@
-## Head2Head: Video-based Neural Head Synthesis & Head2Head++: Deep Facial Attributes Re-Targeting
+## Head2Head: Video-based Neural Head Synthesis & <br />  Head2Head++: Deep Facial Attributes Re-Targeting
 
 PyTorch implementation for Head2Head and Head2Head++. It can be used to fully transfer the head pose, facial expression and eye movements from a source video to a target identity.
 
@@ -139,7 +139,7 @@ python scripts/download_dataset.py --dataset head2headDatasetv2
 
 ## Create your Dataset
 
-You can create your own dataset from .mp4 video files. For that, first we do **face detection**, which returns a fixed bounding box that is used to extract the ROI, around the face. Then, we perform **3D face reconstruction** and compute the NMFC images, one for each frame of the video. Finally, we run **facial landmark localisation** to get the eye movements.
+You can create your own dataset from .mp4 video files. For that, first do **face detection**, which returns a fixed bounding box that is used to extract the ROI, around the face. Then, perform **3D face reconstruction** and compute the NMFC images, one for each frame of the video. Finally, run **facial landmark localisation** to get the eye movements.
 
 #### Face detection (tracking)
 
@@ -221,7 +221,7 @@ Nearly real-time demo using your camera:
 
 ## Pre-training on FaceForensic++ Dataset
 
-In order to increase the generative performance of head2head in very short target videos, we can pre-train a model on the a multi-person dataset, such as FaceForensic++, and then fine-tune it on a new target video-identity. You can download a processed version of the original 1000 videos of FaceForensic++ with complete NMFC annotations (requires ~100 GBs of free disk space), with:
+In order to increase the generative performance of head2head in short target videos, we can pre-train a model on the a multi-person dataset, such as FaceForensic++, and then fine-tune it on a new target video-identity. You can download a processed version of the original 1000 videos of FaceForensic++ with complete NMFC annotations (requires ~100 GBs of free disk space), with:
 
 ```bash
 python scripts/download_dataset.py --dataset faceforensicspp
@@ -235,7 +235,10 @@ Finally, fine-tune on ```<target_name>``` from ```<dataset_name>```:
 ```bash
 ./scripts/train/finetune_on_target.sh <target_name> <dataset_name>
 ```
-
+Perform head reenactment:
+```bash
+./scripts/test/test_finetuned_head_reenactment_from_source_to_target.sh <source_name> <target_name> <dataset_name>
+```
 ## Citation
 
 If you use this code, please cite our Head2Head paper.
