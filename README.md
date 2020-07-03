@@ -138,6 +138,12 @@ We have added eight new identities, with longer training video footage ( > 10 mi
 python scripts/download_dataset.py --dataset head2headDatasetv2
 ```
 
+You can also download the trained models (checkpoints) for all eight target identities here: [\[checkpoints.zip\]](https://www.dropbox.com/s/kmg1eaklr2agse9/checkpoints.zip?dl=1), or with:
+
+```bash
+python scripts/download_checkpoints.py --dataset head2headDatasetv2
+```
+
 ## Create your Dataset
 
 You can create your own dataset from .mp4 video files. For that, first do **face detection**, which returns a fixed bounding box that is used to extract the ROI, around the face. Then, perform **3D face reconstruction** and compute the NMFC images, one for each frame of the video. Finally, run **facial landmark localisation** to get the eye movements.
