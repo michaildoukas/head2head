@@ -246,7 +246,7 @@ and then train head2head on this multi-person dataset
 ```
 Alternatively download the trained checkpoint [here](https://www.dropbox.com/s/gb4gzmjtypc7b4m/checkpoints.zip?dl=1), or by running:
 ```bash
-python scripts/download_checkpoints.py --faceforensicspp
+python scripts/download_checkpoints.py --dataset faceforensicspp
 ```
 Finally, fine-tune a model on ```<target_name>``` from ```<dataset_name>``` dataset:
 ```bash
