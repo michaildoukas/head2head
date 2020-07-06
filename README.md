@@ -151,7 +151,7 @@ python scripts/download_checkpoints.py --dataset head2headDatasetv2
 
 You can create your own dataset from .mp4 video files. For that, first do **face detection**, which returns a fixed bounding box that is used to extract the ROI, around the face. Then, perform **3D face reconstruction** and compute the NMFC images, one for each frame of the video. Finally, run **facial landmark localisation** to get the eye movements.
 
-#### Face detection (tracking)
+#### Face detection
 
 In order to perform face detection and crop the facial region from a single .mp4 file or a directory with multiple files, run:
 
@@ -165,7 +165,7 @@ python preprocessing/detect.py --original_videos_path <videos_path> --dataset_na
 
 - ```<split>``` is the data split to place the file(s). If set to ```train```, the videos-identities can be used as target, but the last one third of the frames is placed in the test set, enabling self reenactment experiments. When set to ```test```, the videos-identities can be used only as source and no frames are placed in the training set. (default: ```train```)
 
-#### 3D face reconstruction
+#### 3D face reconstruction (requires LSFM files acquisition)
 
 To perform 3D facial reconstruction and compute the NMFC images of all videos/identities in the dataset, run:
 
