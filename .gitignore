@@ -14,3 +14,11 @@ preprocessing/models/
 preprocessing/files/
 results/
 results_demo/
+scripts/test/test_finetuned_self_reenactment_on_target_numseq.sh
+scripts/test/test_self_reenactment_on_target_numseq.sh
+scripts/test/test_no*
+scripts/test/test_landmarks*
+scripts/train/finetune_on_target_numseq.sh
+scripts/train/train_on_target_numseq.sh
+scripts/train/train_landmarks*
+scripts/train/train_no*

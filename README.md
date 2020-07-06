@@ -109,7 +109,11 @@ Alternatively, you can download Head2Head dataset, by running:
 python scripts/download_dataset.py
 ```
 
-It will be placed under ```datasets/head2headDataset```.
+You can download the fine-tuned models (checkpoints) for all seven target identities here: [\[checkpoints.zip\]](https://www.dropbox.com/s/ti8nv0jeb3camcj/checkpoints.zip?dl=1), or with:
+
+```bash
+python scripts/download_checkpoints.py
+```
 
 #### Head2Head Dataset structure
 
@@ -231,15 +235,18 @@ Nearly real-time demo using your camera:
 
 ## Pre-training on FaceForensic++ Dataset
 
-In order to increase the generative performance of head2head in short target videos, we can pre-train a model on the a multi-person dataset, such as FaceForensic++, and then fine-tune it on a new target video-identity. You can download a processed version of the original 1000 videos of FaceForensic++ with complete NMFC annotations (requires ~100 GBs of free disk space), with:
+In order to increase the generative performance of head2head in short target videos, we can pre-train a model on the a multi-person dataset, such as FaceForensic++, and then fine-tune it on a new target video-identity. You can download a processed version of the 1000 real videos of FaceForensic++ with complete NMFC annotations (requires ~100 GBs of free disk space), with:
 
 ```bash
 python scripts/download_dataset.py --dataset faceforensicspp
 ```
-
-Train head2head on this multi-person dataset:
+and then train head2head on this multi-person dataset
 ```bash
 ./scripts/train/train_on_faceforensicspp.sh
+```
+Alternatively download the trained checkpoint directly [\[checkpoints.zip\]](https://www.dropbox.com/s/gb4gzmjtypc7b4m/checkpoints.zip?dl=1), or by running:
+```bash
+python scripts/download_checkpoints.py --faceforensicspp
 ```
 Finally, fine-tune on ```<target_name>``` from ```<dataset_name>```:
 ```bash

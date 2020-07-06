@@ -279,6 +279,12 @@ def main():
     args.target_id = args.target_id.replace('_', '')
     # Print Arguments
     print_args(parser, args)
+    # Check if conditional input files already exist. (We check only NMFCs)
+    save_nmfcs_dir = os.path.join(args.dataset_path, 'test',
+                    'source_nmfcs', args.target_id + '_' + args.source_id)
+    if os.path.isdir(save_nmfcs_dir):
+        print('Conditional input files already exist!')
+        exit(0)
     # Initialize the NMFC renderer.
     renderer = NMFCRenderer(args)
     # Read the expression parameters from the source person.

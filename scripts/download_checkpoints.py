@@ -19,7 +19,7 @@ def unzip_file(file_name, unzip_path):
 def main():
     # Argument Parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='head2headDatasetv2',
+    parser.add_argument('--dataset', type=str, default='head2headDataset',
                         choices=['head2headDataset', 'head2headDatasetv2', 'faceforensicspp'],
                         help='The dataset checkpoint to download. \
                         [head2headDataset|head2headDatasetv2|faceforensicspp]')
@@ -29,6 +29,10 @@ def main():
     save_path = 'checkpoints.zip'
     if args.dataset == 'head2headDatasetv2':
         link = ('checkpoints.zip', 'https://www.dropbox.com/s/kmg1eaklr2agse9/checkpoints.zip?dl=1')
+    elif args.dataset == 'faceforensicspp':
+        link = ('checkpoints.zip', 'https://www.dropbox.com/s/gb4gzmjtypc7b4m/checkpoints.zip?dl=1')
+    else:
+        link = ('checkpoints.zip', 'https://www.dropbox.com/s/ti8nv0jeb3camcj/checkpoints.zip?dl=1')
     bar = MyProgressBar('Downloading %s' % link[0])
     wget.download(link[1], save_dir, bar=bar.get_bar)
     print('\n')
