@@ -135,7 +135,7 @@ head2headDataset ----- original_videos
                                              --- nmfcs (GAN conditional input)
 ```
 
-#### Head2Head++ Dataset
+## Head2Head++ Dataset
 
 ![](imgs/head2headDatasetv2_identities.png)
 
