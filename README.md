@@ -109,7 +109,7 @@ Alternatively, you can download Head2Head dataset, by running:
 python scripts/download_dataset.py
 ```
 
-You can download the fine-tuned models (checkpoints) for all seven target identities here: [\[checkpoints.zip\]](https://www.dropbox.com/s/ti8nv0jeb3camcj/checkpoints.zip?dl=1), or with:
+You can download the fine-tuned models (checkpoints) for all seven target identities [here](https://www.dropbox.com/s/ti8nv0jeb3camcj/checkpoints.zip?dl=1), or with:
 
 ```bash
 python scripts/download_checkpoints.py
@@ -145,7 +145,7 @@ We have added eight new identities, with longer training video footage ( > 10 mi
 python scripts/download_dataset.py --dataset head2headDatasetv2
 ```
 
-You can also download the trained models (checkpoints) for all eight target identities here: [\[checkpoints.zip\]](https://www.dropbox.com/s/kmg1eaklr2agse9/checkpoints.zip?dl=1), or with:
+You can also download the trained models (checkpoints) for all eight target identities [here](https://www.dropbox.com/s/kmg1eaklr2agse9/checkpoints.zip?dl=1), or with:
 
 ```bash
 python scripts/download_checkpoints.py --dataset head2headDatasetv2
@@ -244,7 +244,7 @@ and then train head2head on this multi-person dataset
 ```bash
 ./scripts/train/train_on_faceforensicspp.sh
 ```
-Alternatively download the trained checkpoint directly [\[checkpoints.zip\]](https://www.dropbox.com/s/gb4gzmjtypc7b4m/checkpoints.zip?dl=1), or by running:
+Alternatively download the trained checkpoint [here](https://www.dropbox.com/s/gb4gzmjtypc7b4m/checkpoints.zip?dl=1), or by running:
 ```bash
 python scripts/download_checkpoints.py --faceforensicspp
 ```
