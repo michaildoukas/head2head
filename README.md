@@ -248,7 +248,7 @@ Alternatively download the trained checkpoint directly [\[checkpoints.zip\]](htt
 ```bash
 python scripts/download_checkpoints.py --faceforensicspp
 ```
-Finally, fine-tune on ```<target_name>``` from ```<dataset_name>```:
+Finally, fine-tune a model on ```<target_name>``` from ```<dataset_name>``` dataset:
 ```bash
 ./scripts/train/finetune_on_target.sh <target_name> <dataset_name>
 ```
