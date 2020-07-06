@@ -88,9 +88,7 @@ python scripts/download_files.py
 ```
 
 #### Acquiring the LSFM Models
-In case you want to use your own source or target videos, you need to acquire the LSFM model files ```all_all_all.mat``` and ```lsfm_exp_30.dat``` and place them under the ```preprocessing/files``` directory. These files are essential for the 3D face reconstruction stage.
-
-The LSFM models were produced by using this software pipeline on the (proprietary) MeIn3D dataset. For full terms and conditions, and to request access to the models, please visit the [LSFM website](http://ibug.doc.ic.ac.uk/resources/lsfm/). For more details on models, see [Large Scale Facial Model (LSFM)](https://github.com/menpo/lsfm).
+In case you want to use your own source or target videos, you need to acquire the LSFM model files ```all_all_all.mat``` and ```lsfm_exp_30.dat``` and place them under the ```preprocessing/files``` directory. These files are essential for the 3D face reconstruction stage. For full terms and conditions, and to request access to the models, please visit the [LSFM website](http://ibug.doc.ic.ac.uk/resources/lsfm/). For more details on models, see [Large Scale Facial Model (LSFM)](https://github.com/menpo/lsfm).
 
 ## Head2Head dataset
 
