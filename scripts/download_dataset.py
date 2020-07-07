@@ -21,8 +21,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default='head2headDataset',
                         choices=['head2headDataset', 'head2headDatasetv2', 'faceforensicspp'],
-                        help='The dataset to download. \
-                        [head2headDataset|head2headDatasetv2|faceforensicspp]')
+                        help='The dataset to download.')
     args = parser.parse_args()
     print('Download complete %s dataset\n' % args.dataset)
     if args.dataset == 'head2headDataset' or args.dataset == 'head2headDatasetv2':
@@ -30,10 +29,16 @@ def main():
         if args.dataset == 'head2headDataset':
             links_list = [('dataset.zip', 'https://www.dropbox.com/s/424wm7cp2fa4o2o/dataset.zip?dl=1'),
                           ('original_videos.zip', 'https://www.dropbox.com/s/qzpfz47nwtfryad/original_videos.zip?dl=1')]
+            for link in links_list:
+                save_path = os.path.join(save_dir, link[0])
+                if not os.path.exists(save_path):
+                    bar = MyProgressBar('Downloading %s' % link[0])
+                    wget.download(link[1], save_dir, bar=bar.get_bar)
+                    print('\n')
+                print('Unzipping file')
+                unzip_file(save_path, save_dir)
         else:
-            links_list = [('dataset.zip', 'https://www.dropbox.com/s/t2unzm9logbzg1e/dataset.zip?dl=1'),
-                          ('original_videos.zip', 'https://www.dropbox.com/s/5s3bqkvc4asppgd/original_videos.zip?dl=1')]
-        for link in links_list:
+            link = ('original_videos.zip', 'https://www.dropbox.com/s/5s3bqkvc4asppgd/original_videos.zip?dl=1')
             save_path = os.path.join(save_dir, link[0])
             if not os.path.exists(save_path):
                 bar = MyProgressBar('Downloading %s' % link[0])
@@ -41,6 +46,28 @@ def main():
                 print('\n')
             print('Unzipping file')
             unzip_file(save_path, save_dir)
+            dir = 'datasets/head2headDatasetv2'
+            dataset_dir = 'datasets/head2headDatasetv2/dataset'
+            download_paths_zip_parts = \
+                ['https://www.dropbox.com/s/t2unzm9logbzg1e/dataset.zip?dl=1',
+                 'https://www.dropbox.com/s/qgv61mnkhizmedv/dataset.z01?dl=1']
+            for i, path in enumerate(download_paths_zip_parts):
+                if not os.path.exists(os.path.join(dir, \
+                                      path.split('/')[-1].split('?')[0])):
+                    bar = MyProgressBar('Downloading dataset part %d/%d' % (i+1,
+                                        len(download_paths_zip_parts)))
+                    wget.download(path, dir, bar=bar.get_bar)
+                    print('\n')
+            print('Merging parts into single .zip file...')
+            os.system('zip -F ' + dataset_dir + '.zip \
+                       --out ' + dataset_dir + '_all.zip')
+            print('Deleting parts...')
+            for i, path in enumerate(download_paths_zip_parts):
+                file_p  = os.path.join(dir, path.split('/')[-1].split('?')[0])
+                if os.path.exists(file_p):
+                    os.remove(file_p)
+            print('Unzipping file, this might take some time...')
+            unzip_file(dataset_dir + '_all.zip', dir)
     else:
         dir = 'datasets'
         dataset_dir = 'datasets/faceforensicspp'
@@ -58,7 +85,7 @@ def main():
         for i, path in enumerate(download_paths_zip_parts):
             if not os.path.exists(os.path.join(dir, \
                                   path.split('/')[-1].split('?')[0])):
-                bar = MyProgressBar('Downloading part %d/%d' % (i+1,
+                bar = MyProgressBar('Downloading dataset part %d/%d' % (i+1,
                                     len(download_paths_zip_parts)))
                 wget.download(path, dir, bar=bar.get_bar)
                 print('\n')

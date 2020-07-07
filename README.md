@@ -117,29 +117,38 @@ python scripts/download_checkpoints.py
 
 #### Head2Head Dataset structure
 
-We split the original video of each identity into one training and one test sequence. We place about one third of the total number of frames in the test split. In this way, we are able to use these frames as ground truth, when testing the model in a self reenactment scenario.
+We split the original video of each identity into one training and one test sequence. We place about one third of the total number of frames in the test split. In this way, we are able to use these frames as ground truth, when testing the model in a self reenactment scenario. In the test set, we also provide the conditional input (NMFCs, landmarks70) for performing head reenactment between each pair of identities in the dataset (```source_nmfcs, source_landmarks70```).
 
 ```
 head2headDataset ----- original_videos
                    |
                    --- dataset ----- train ----- exp_coeffs (expression vectors)
-                                 |           |
-                                 --- test    --- id_coeffs (identity vector)
-                                    (same    |
-                                  structure) --- images (ROI RGB frames)
+                                |            |
+                                |            --- id_coeffs (identity vector)
+                                |            |
+                                |            --- images (ROI RGB frames)
+                                |            |
+                                |            --- landmarks70 (68 + 2 facial landmarks)
+                                |            |
+                                |            --- misc (camera parameters - pose)
+                                |            |
+                                |            --- nmfcs (GAN conditional input)
+                                |
+                                |
+                                ----- test ----- (same directories as train)
                                              |
-                                             --- landmarks70 (68 + 2 facial landmarks)
+                                             --- source_images
                                              |
-                                             --- misc (camera parameters - pose)
+                                             --- source_landmarks70
                                              |
-                                             --- nmfcs (GAN conditional input)
+                                             --- source_nmfcs
 ```
 
 ## Head2Head++ Dataset
 
 ![](imgs/head2headDatasetv2_identities.png)
 
-We have added eight new identities, with longer training video footage ( > 10 mins). Please download this dataset via the links: [\[original_videos.zip\]](https://www.dropbox.com/s/5s3bqkvc4asppgd/original_videos.zip?dl=1), [\[dataset.zip\]](https://www.dropbox.com/s/t2unzm9logbzg1e/dataset.zip?dl=1), or by running:
+We have added eight new identities, with longer training video footage ( > 10 mins) [\[original_videos.zip\]](https://www.dropbox.com/s/5s3bqkvc4asppgd/original_videos.zip?dl=1). Please download the complete dataset by running:
 
 ```bash
 python scripts/download_dataset.py --dataset head2headDatasetv2
@@ -151,7 +160,7 @@ You can also download the trained models (checkpoints) for all eight target iden
 python scripts/download_checkpoints.py --dataset head2headDatasetv2
 ```
 
-## Create your Dataset
+## Create your Dataset (requires LSFM files acquisition)
 
 You can create your own dataset from .mp4 video files. For that, first do **face detection**, which returns a fixed bounding box that is used to extract the ROI, around the face. Then, perform **3D face reconstruction** and compute the NMFC images, one for each frame of the video. Finally, run **facial landmark localisation** to get the eye movements.
 
@@ -169,7 +178,7 @@ python preprocessing/detect.py --original_videos_path <videos_path> --dataset_na
 
 - ```<split>``` is the data split to place the file(s). If set to ```train```, the videos-identities can be used as target, but the last one third of the frames is placed in the test set, enabling self reenactment experiments. When set to ```test```, the videos-identities can be used only as source and no frames are placed in the training set. (default: ```train```)
 
-#### 3D face reconstruction (requires LSFM files acquisition)
+#### 3D face reconstruction (requires LSFM files)
 
 To perform 3D facial reconstruction and compute the NMFC images of all videos/identities in the dataset, run:
 
