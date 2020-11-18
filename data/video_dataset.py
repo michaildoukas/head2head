@@ -21,10 +21,9 @@ class videoDataset(BaseDataset):
         self.dir_rgb_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'images')
         self.rgb_video_paths = make_video_dataset(self.dir_rgb_video, opt.target_name, source_name, opt.max_n_sequences)
         assert_valid_pairs(self.nmfc_video_paths, self.rgb_video_paths)
-        if not opt.no_eye_gaze or (not self.opt.no_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
-            self.dir_landmark_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'landmarks70')
-            self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name, source_name, opt.max_n_sequences)
-            assert_valid_pairs(self.landmark_video_paths, self.rgb_video_paths)
+        self.dir_landmark_video = os.path.join(opt.dataroot, self.opt.phase, prefix + 'landmarks70')
+        self.landmark_video_paths = make_video_dataset(self.dir_landmark_video, opt.target_name, source_name, opt.max_n_sequences)
+        assert_valid_pairs(self.landmark_video_paths, self.rgb_video_paths)
 
         self.n_of_seqs = len(self.nmfc_video_paths)
         self.seq_len_max = max([len(A) for A in self.nmfc_video_paths])
@@ -36,8 +35,7 @@ class videoDataset(BaseDataset):
         nmfc_video_paths = self.nmfc_video_paths[seq_idx]
         nmfc_len = len(nmfc_video_paths)
         rgb_video_paths = self.rgb_video_paths[seq_idx]
-        if not self.opt.no_eye_gaze or (not self.opt.no_mouth_D and self.opt.isTrain) or (self.opt.use_eyes_D and self.opt.isTrain):
-            landmark_video_paths = self.landmark_video_paths[seq_idx]
+        landmark_video_paths = self.landmark_video_paths[seq_idx]
 
         # Get parameters and transforms.
         n_frames_total, start_idx = get_video_parameters(self.opt, self.n_frames_total, nmfc_len, self.frame_idx)
@@ -68,7 +66,7 @@ class videoDataset(BaseDataset):
                                                 transform_scale_eye_gaze_video,
                                                 add_noise=self.opt.isTrain)
                 eye_video = eye_video_i if i == 0 else torch.cat([eye_video, eye_video_i], dim=0)
-            if not self.opt.no_mouth_D and self.opt.isTrain:
+            if not self.opt.do_reenactment:
                 landmark_video_path = landmark_video_paths[start_idx + i]
                 mouth_centers_i = self.get_mouth_center(landmark_video_path)
                 mouth_centers = mouth_centers_i if i == 0 else torch.cat([mouth_centers, mouth_centers_i], dim=0)

@@ -28,7 +28,7 @@ def main():
         save_dir = os.path.join('datasets', args.dataset)
         if args.dataset == 'head2headDataset':
             links_list = [('dataset.zip', 'https://www.dropbox.com/s/424wm7cp2fa4o2o/dataset.zip?dl=1'),
-                          ('original_videos.zip', 'https://www.dropbox.com/s/qzpfz47nwtfryad/original_videos.zip?dl=1')]
+                          ('original_videos.zip', 'https://www.dropbox.com/s/ngibbzp1noxnyss/original_videos.zip?dl=1')]
             for link in links_list:
                 save_path = os.path.join(save_dir, link[0])
                 if not os.path.exists(save_path):
