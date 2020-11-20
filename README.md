@@ -100,7 +100,7 @@ We have trained and tested Head2Head on the seven target identities (Turnbull, O
 
 #### Download Head2Head Dataset
 
-- Link to the seven original video files, before ROI extraction: [\[original_videos.zip\]](https://www.dropbox.com/s/qzpfz47nwtfryad/original_videos.zip?dl=1). The corresponding YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
+- Link to the seven original video files, before ROI extraction: [\[original_videos.zip\]](https://www.dropbox.com/s/ngibbzp1noxnyss/original_videos.zip?dl=1). The corresponding YouTube urls, along with the start and stop timestamps are listed in ```datasets/head2headDataset/urls.txt``` file.
 - Link to full dataset, with the extracted ROI frames and 3D reconstruction data (NMFCs, landmarks, expression, identity and camera parameters): [\[dataset.zip\]](https://www.dropbox.com/s/424wm7cp2fa4o2o/dataset.zip?dl=1)
 
 Alternatively, you can download Head2Head dataset, by running:
