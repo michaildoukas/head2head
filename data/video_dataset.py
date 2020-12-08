@@ -11,7 +11,7 @@ from data.landmarks_to_image import create_eyes_image
 class videoDataset(BaseDataset):
     def initialize(self, opt):
         self.opt = opt
-        do_reenactment = opt.do_reenactment if not opt.isTrain else False
+        self.do_reenactment = opt.do_reenactment if not opt.isTrain else False
         prefix = 'source_' if do_reenactment else ''
         source_name = opt.source_name if not opt.isTrain else None
 
@@ -66,7 +66,7 @@ class videoDataset(BaseDataset):
                                                 transform_scale_eye_gaze_video,
                                                 add_noise=self.opt.isTrain)
                 eye_video = eye_video_i if i == 0 else torch.cat([eye_video, eye_video_i], dim=0)
-            if not self.opt.do_reenactment:
+            if not self.do_reenactment:
                 landmark_video_path = landmark_video_paths[start_idx + i]
                 mouth_centers_i = self.get_mouth_center(landmark_video_path)
                 mouth_centers = mouth_centers_i if i == 0 else torch.cat([mouth_centers, mouth_centers_i], dim=0)
