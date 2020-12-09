@@ -12,7 +12,7 @@ class videoDataset(BaseDataset):
     def initialize(self, opt):
         self.opt = opt
         self.do_reenactment = opt.do_reenactment if not opt.isTrain else False
-        prefix = 'source_' if do_reenactment else ''
+        prefix = 'source_' if self.do_reenactment else ''
         source_name = opt.source_name if not opt.isTrain else None
 
         # Get dataset directories.
