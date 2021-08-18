@@ -33,6 +33,7 @@ def main():
                 save_path = os.path.join(save_dir, link[0])
                 if not os.path.exists(save_path):
                     bar = MyProgressBar('Downloading %s' % link[0])
+                    os.makedirs(save_dir, exist_ok=True)
                     wget.download(link[1], save_dir, bar=bar.get_bar)
                     print('\n')
                 print('Unzipping file')
@@ -42,6 +43,7 @@ def main():
             save_path = os.path.join(save_dir, link[0])
             if not os.path.exists(save_path):
                 bar = MyProgressBar('Downloading %s' % link[0])
+                os.makedirs(save_dir, exist_ok=True)
                 wget.download(link[1], save_dir, bar=bar.get_bar)
                 print('\n')
             print('Unzipping file')
